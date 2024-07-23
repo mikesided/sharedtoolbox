@@ -1,0 +1,220 @@
+/* MAIN */
+QMainWindow {
+    background-color: @dark_1;
+}
+
+QWidget {
+    color: @white;
+    font-size: 11px;
+    outline: 0;
+}
+
+QFrame#nav {
+    background: @dark_1;
+}
+
+QFrame#editorwidget {
+    background: @dark;
+}
+
+QFrame#fileswidget {
+    border: none;
+    border-bottom: 1px solid @dark_2;
+    padding-top: 3px;
+}
+
+QFrame#filebutton {
+    padding-left: 5px;
+    padding-right: 5px;
+    background: @dark_2;
+    border-radius: 0px;
+    border: 1px solid @dark_3;
+    padding-right: 2px;/*
+    margin-top: 4px;
+    padding-bottom: 4px;*/
+}
+
+QFrame#filebutton[selected=true] {
+    background: transparent;
+    border-left: 1px solid @dark_3;
+    border-right: 1px solid @dark_3;
+    border-top: 2px solid @primary_active;
+    border-bottom: 5px solid @dark;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+QFrame#filebutton[selected=false] {
+    padding-left: 8px;
+}
+
+QFrame#filebutton[selected=false]:hover {
+    background: @dark_3;
+    border-top: 2px solid @primary_hover;
+    color: #ffffff;
+}
+
+QWidget:disabled {
+    color: @white_disabled;
+}
+
+QFrame#line {
+    border: 1px solid @dark_3;
+}
+
+QWidget#title {
+    font-size: 16px;
+    color: @primary;
+}
+
+QScrollArea {
+    background: transparent;
+}
+
+QScrollArea > QWidget > QWidget { 
+    background: transparent;
+}
+
+QScrollBar {
+    background: @dark_2;
+    border: none;
+}
+
+QScrollBar:vertical {
+    width: 6px;
+}
+
+QScrollBar:horizontal {
+    border-top: 1px solid @dark_2;
+    height: 3px;
+}
+
+QScrollBar::handle {
+    background-color: @dark_2; 
+    border-radius: 5px; 
+    border: 1px solid @dark_3; 
+}
+
+QScrollBar::handle:vertical {
+    min-width: 100px;
+}
+
+QScrollBar::handle:horizontal {
+    min-height: 100px;
+}
+
+QScrollBar::add-page, QScrollBar::sub-page {
+    background: @dark_1;
+}
+
+QLineEdit#searchbar {
+    background: @dark_2;
+    border: 1px solid @dark_1;
+    border-radius: 3px;
+    margin-right: 5px;
+    margin-left: 5px;
+}
+
+QPushButton {
+    background: @primary;
+    border-radius: 3px;
+    padding-left: 3px;
+    padding-right: 3px;
+    min-height: 18px;
+}
+
+QPushButton:hover {
+    background: @primary_hover;
+    color: @white;
+}
+
+QPushButton:pressed {
+    background: @primary_active;
+    border: 1px solid @dark_2;
+}
+
+QPushButton:disabled {
+    background: @primary_disabled;
+    color: @white_disabled;
+    border: 1px solid @dark_2;
+}
+
+QPushButton#invisible {
+    background: transparent;
+    border: none;
+    color: @primary;
+}
+
+QPushButton#icon {
+    background: transparent;
+    border: none;
+    color: @primary;
+}
+
+QPushButton#icon:hover {
+    background: @dark_2;
+}
+
+QPushButton#icon:pressed {
+    background: @dark_3;
+}
+
+QPushButton#icon:disabled {
+    background: @dark_2;
+    border: 1px solid @black_disabled;
+}
+
+QPushButton#box {
+    background: transparent;
+    border: 1px solid @dark_3;
+    color: @primary;
+}
+
+QPushButton#box:hover {
+    background: @dark_2;
+}
+
+QPushButton#box:pressed {
+    background: @dark_3;
+}
+
+QPushButton#box:disabled {
+    background: @dark_2;
+    border: 1px solid @black_disabled;
+}
+
+QTreeView {
+    background-color: transparent;
+    border: none;
+}
+
+QTreeView:item {
+    background: transparent;
+}
+
+QTreeView:item::hover {
+    background: @primary_hover;
+    color: #ffffff;
+}
+
+QTreeView:item::selected {
+    background: @primary_active;
+    color: #ffffff;
+}
+
+QSplitter::handle {
+    background: @dark_3;
+    border: 1px solid @dark_3;
+    width: 0px;
+}
+
+QPlainTextEdit#codeeditor {
+    font-family: Consolas;
+    background: transparent;
+    border: none;
+    border-top: 1px solid @dark_2;
+}
+
+QWidget#codeeditorlines {
+    color: @primary_disabled;
+}

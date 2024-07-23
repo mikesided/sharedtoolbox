@@ -1,0 +1,251 @@
+# System Imports
+import os
+import sys
+
+# Third Party Imports
+from PySide6.QtWidgets import *
+from PySide6.QtGui import *
+from PySide6.QtCore import *
+import qtawesome
+
+# Local Imports
+from sharedtoolbox import style, configs, event_handler
+from sharedtoolbox.widgets.base import *
+
+# ______________________________________________________________________________________________________________________
+
+class NavigationWidget(QFrame):
+
+    def __init__(self, *args, **kwargs):
+        super(NavigationWidget, self).__init__(objectName='nav', *args, **kwargs)
+        self.setMinimumWidth(150)
+
+        # Properties
+
+        # Widgets
+        self.nav_tree = QTreeView()
+        self.nav_tree.header().hide()
+        self.proxy_model = FilterProxyModel()
+        self.btn_new_script = QPushButton('New', objectName='box', enabled=False,
+                                          icon=qtawesome.icon('fa5b.python', color=style.STYLE.get('primary')))
+        self.btn_open_dir = QPushButton('Open', objectName='box', enabled=False,
+                                          icon=qtawesome.icon('ei.folder-open', color=style.STYLE.get('primary')))
+        self.btn_reload = QPushButton(text='Reload', objectName='box',
+                                      icon=qtawesome.icon('mdi.reload', color=style.STYLE.get('primary')))
+        self.search_bar = QLineEdit(placeholderText='Search..', objectName='searchbar', fixedHeight=24)
+
+        # Layout
+        self.header_layout = QHBoxLayout()
+        self.header_layout.setContentsMargins(8, 8, 8, 0)
+        self.header_layout.setSpacing(8)
+        self.body_layout = QVBoxLayout()
+        self.body_layout.setContentsMargins(0, 0, 0, 0)
+        self.scroll_layout = VScrollLayout()
+        self.scroll_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.setLayout(QVBoxLayout())
+        self.layout().setContentsMargins(0, 0, 0, 0)
+        self.layout().setSpacing(8)
+        self.layout().addLayout(self.header_layout)
+        self.layout().addWidget(HLine())
+        self.layout().addLayout(self.body_layout)
+        self.body_layout.addWidget(self.search_bar)
+        self.body_layout.addWidget(self.scroll_layout.scroll_area)
+        self.scroll_layout.addWidget(self.nav_tree)
+
+        self.init_ui()
+        self.init_header_layout()
+
+        # Connections
+        self.search_bar.textChanged.connect(self._on_search_bar_textChanged)
+        self.btn_new_script.clicked.connect(self._on_btn_new_script_clicked)
+        self.btn_open_dir.clicked.connect(self._on_btn_open_dir_clicked)
+
+        # Init
+        self._set_new_model()
+        self._load_scripts()
+
+    @property
+    def selected_item(self):
+        """Returns the selected item"""
+        index = self.nav_tree.selectionModel().currentIndex()
+        if index.isValid():
+            item = self.proxy_model.itemData(self.nav_tree.selectedIndexes()[0])
+            return item
+        else:
+            return None
+
+    def init_ui(self):
+        """Init UI"""
+        pass
+
+    def init_header_layout(self):
+        """Init the header layout"""
+        self.header_layout.addWidget(QLabel(text='Scripts', enabled=False))
+        self.header_layout.addItem(HSpacer())
+        self.header_layout.addWidget(self.btn_new_script)
+        self.header_layout.addWidget(self.btn_open_dir)
+        self.header_layout.addWidget(VLine())
+        self.header_layout.addWidget(self.btn_reload)
+
+    def _set_new_model(self):
+        """Sets a new model on the treeview"""
+        self.model = QStandardItemModel()
+        self.proxy_model.setSourceModel(self.model)
+        self.nav_tree.setModel(self.proxy_model)
+        self.nav_tree.selectionModel().selectionChanged.connect(self._on_treeview_itemSelected)
+
+    def _on_treeview_itemSelected(self, *args, **kwargs):
+        """Triggered when a ContainerItem/ScriptItem has been selected"""
+        item = self.selected_item
+        item_path = item.get(256)
+
+        # Toggle new script button state
+        if item_path is None or item_path.endswith('.py'):
+            self.btn_new_script.setEnabled(False)
+            self.btn_open_dir.setEnabled(False)
+        else:
+            self.btn_new_script.setEnabled(True)
+            self.btn_open_dir.setEnabled(True)
+
+        # Emit selection signal
+        if item_path and item_path.endswith('.py'):
+            event_handler.file_clicked.emit(item_path)
+
+    def _load_scripts(self):
+        """Loads all scripts found"""
+        _item_cache = {}
+
+        # Local scripts
+        local_script_path = os.environ.get(configs.LOCAL_SCRIPT_ENV_VAR, configs.LOCAL_SCRIPT_PATH)
+        local_item = ContainerItem(local_script_path, 'Local')
+        self.model.appendRow(local_item)
+        _item_cache[local_script_path] = local_item
+
+        if os.path.exists(local_script_path):
+            for root, dirs, files in os.walk(local_script_path):
+                for dir in dirs:
+                    itemN = ContainerItem(os.path.join(root, dir), dir)
+                    _item_cache.get(root).appendRow(itemN)
+                    _item_cache[os.path.join(root, dir)] = itemN
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    if file.endswith('.py'):
+                        itemN = ScriptItem(file_path, file[0:-3])
+                        _item_cache.get(root).appendRow(itemN)
+                    
+        # Shared scripts
+        shared_script_path = os.environ.get(configs.SHARED_SCRIPT_ENV_VAR, configs.SHARED_SCRIPT_PATH)
+        shared_item = ContainerItem(shared_script_path, 'Shared')
+        self.model.appendRow(shared_item)
+        _item_cache[local_script_path] = shared_item
+
+        if os.path.exists(shared_script_path):
+            for root, dirs, files in os.walk(shared_script_path):
+                for dir in dirs:
+                    itemN = ContainerItem(os.path.join(root, dir), dir)
+                    _item_cache.get(root).appendRow(itemN)
+                    _item_cache[os.path.join(root, dir)] = itemN
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    if file.endswith('.py'):
+                        itemN = ScriptItem(file_path, file[0:-3])
+                        _item_cache.get(root).appendRow(itemN)
+
+        # Project Scripts
+        project_root_path = os.environ.get(configs.PROJECT_ROOT_ENV_VAR, configs.PROJECT_ROOT_PATH)
+        project_script_location = os.environ.get(configs.PROJECT_SCRIPT_LOCATION_ENV_VAR, configs.PROJECT_SCRIPT_LOCATION)
+        project_item = ContainerItem(None, 'Projects')
+        self.model.appendRow(project_item)
+        _item_cache[local_script_path] = shared_item
+
+        if os.path.exists(project_root_path):
+            for dir in os.listdir(project_root_path):
+                dir_path = os.path.join(project_root_path, dir)
+                if not os.path.isdir(dir_path):
+                    continue
+                project_script_path = os.path.join(dir_path, project_script_location)
+                current_project_item = ContainerItem(project_script_path, dir)
+                _item_cache[project_script_path] = current_project_item
+                project_item.appendRow(current_project_item)
+                for root, dirs, files in os.walk(project_script_path):
+                    for dir_ in dirs:
+                        itemN = ContainerItem(os.path.join(root, dir_), dir_)
+                        _item_cache.get(root).appendRow(itemN)
+                        _item_cache[os.path.join(root, dir_)] = itemN
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        if file.endswith('.py'):
+                            itemN = ScriptItem(file_path, file[0:-3])
+                            _item_cache.get(root).appendRow(itemN)
+
+    def _on_search_bar_textChanged(self, search_text):
+        """Search the script list"""
+        self.proxy_model.setSearchTerm(search_text)
+        if search_text:
+            self.nav_tree.expandAll()
+
+    def _on_btn_open_dir_clicked(self):
+        """Open the selected item in the file browser"""
+        current_item_path = self.selected_item.get(256)
+        if current_item_path:
+            os.startfile(current_item_path)
+
+    def _on_btn_new_script_clicked(self):
+        """Creates a new script in the selected path"""
+        pass
+
+
+class ContainerItem(QStandardItem):
+
+    def __init__(self, path, *args, **kwargs):
+        icon = qtawesome.icon('fa.folder', color=style.STYLE.get('secondary'))
+        super(ContainerItem, self).__init__(icon, *args, **kwargs)
+        self.path = path
+        self.setEditable(False)
+        self.setCheckable(False)
+        self.setData(path, role=Qt.UserRole)
+
+
+class ScriptItem(QStandardItem):
+
+    def __init__(self, script, *args, **kwargs):
+        icon = qtawesome.icon('fa5b.python', color=style.STYLE.get('primary'))
+        super(ScriptItem, self).__init__(icon, *args, **kwargs)
+        self.script = script
+        self.setEditable(False)
+        self.setCheckable(False)
+        self.setData(script, role=Qt.UserRole)
+
+        
+class FilterProxyModel(QSortFilterProxyModel):
+    def __init__(self, *args, **kwargs):
+        super(FilterProxyModel, self).__init__(*args, **kwargs)
+        self.search_term = ''
+
+
+    def setSearchTerm(self, term):
+        self.search_term = term.lower()
+        self.invalidateFilter()
+
+
+    def filterAcceptsRow(self, source_row, source_parent):
+        if not self.search_term:
+            return True
+
+        model = self.sourceModel()
+        index = model.index(source_row, 0, source_parent)
+        if not index.isValid():
+            return False
+
+        # Check the current item
+        if self.search_term in model.data(index).lower():
+            return True
+
+        # Check the children of the current item
+        for row in range(model.rowCount(index)):
+            if self.filterAcceptsRow(row, index):
+                return True
+
+        return False
+# ______________________________________________________________________________________________________________________
