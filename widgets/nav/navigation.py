@@ -10,6 +10,7 @@ import qtawesome
 
 # Local Imports
 from sharedtoolbox import style, configs, event_handler
+from sharedtoolbox.dialogs import infoDialog
 from sharedtoolbox.widgets.base import *
 
 # ______________________________________________________________________________________________________________________
@@ -18,7 +19,8 @@ class NavigationWidget(QFrame):
 
     def __init__(self, *args, **kwargs):
         super(NavigationWidget, self).__init__(objectName='nav', *args, **kwargs)
-        self.setMinimumWidth(150)
+        self.setMinimumWidth(100)
+        self.resize(*configs.Prefs.nav_widget_size)
 
         # Properties
 
@@ -60,6 +62,7 @@ class NavigationWidget(QFrame):
         self.search_bar.textChanged.connect(self._on_search_bar_textChanged)
         self.btn_new_script.clicked.connect(self._on_btn_new_script_clicked)
         self.btn_open_dir.clicked.connect(self._on_btn_open_dir_clicked)
+        event_handler.file_opened.connect(self._on_editor_file_opened)
 
         # Init
         self._set_new_model()
@@ -74,6 +77,15 @@ class NavigationWidget(QFrame):
             return item
         else:
             return None
+        
+    @property
+    def selected_item_path(self):
+        """Returns the selected item's path"""
+        item = self.selected_item
+        if item:
+            return item.get(256)
+        else:
+            return None
 
     def init_ui(self):
         """Init UI"""
@@ -81,7 +93,7 @@ class NavigationWidget(QFrame):
 
     def init_header_layout(self):
         """Init the header layout"""
-        self.header_layout.addWidget(QLabel(text='Scripts', enabled=False))
+        self.header_layout.addWidget(QLabel(text='Explorer', enabled=False))
         self.header_layout.addItem(HSpacer())
         self.header_layout.addWidget(self.btn_new_script)
         self.header_layout.addWidget(self.btn_open_dir)
@@ -188,12 +200,44 @@ class NavigationWidget(QFrame):
     def _on_btn_open_dir_clicked(self):
         """Open the selected item in the file browser"""
         current_item_path = self.selected_item.get(256)
+        if not os.path.isdir(current_item_path):
+            dlg = infoDialog.InfoDialog(text='Directory not found', desc=current_item_path, info_level=3)
+            dlg.exec_()
+            return
         if current_item_path:
             os.startfile(current_item_path)
 
     def _on_btn_new_script_clicked(self):
         """Creates a new script in the selected path"""
         pass
+
+    def iter_tree_items(self):
+        root = self.model.invisibleRootItem()
+        def recurse(parent):
+            for row in range(parent.rowCount()):
+                for column in range(parent.columnCount()):
+                    child = parent.child(row, column)
+                    yield child
+                    if child.hasChildren():
+                        yield from recurse(child)
+        if root is not None:
+            yield from recurse(root)
+
+    def _on_editor_file_opened(self, file):
+        """Triggered by the editor when a new file has been opened
+        Make sure the given file is selected in the navigation widget
+        
+        Args:
+            file (str): File path
+        """
+        if self.selected_item_path and os.path.normpath(self.selected_item_path) != os.path.normpath(file):
+            # Select the file if found
+            # TODO: Loop over model items, if item matches get its index from the model and self.nav_tree.expand(index)
+            pass
+
+    def _exit_handler(self):
+        """Triggered on app quit"""
+        configs.Prefs.set_pref_data('nav_widget_size', (self.width(), self.height()))
 
 
 class ContainerItem(QStandardItem):
@@ -212,7 +256,7 @@ class ScriptItem(QStandardItem):
     def __init__(self, script, *args, **kwargs):
         icon = qtawesome.icon('fa5b.python', color=style.STYLE.get('primary'))
         super(ScriptItem, self).__init__(icon, *args, **kwargs)
-        self.script = script
+        self.script = os.path.normpath(script)
         self.setEditable(False)
         self.setCheckable(False)
         self.setData(script, role=Qt.UserRole)

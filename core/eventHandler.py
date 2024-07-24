@@ -30,8 +30,22 @@ class EventHandler(object, metaclass=Singleton):
         Args:
             singleton (bool): Construct as a singleton? Defaults to False
         """
-        self.file_clicked = Event(str) # File path
+        self.file_clicked = Event(str) # File path. Triggered from the navigation
+        self.file_opened = Event(str) # File path. Triggered from the FilesWidget. This is the current editor displayed
+        self.move_filebtn_left = Event()  # Triggered from the EditorControls.
+        self.move_filebtn_right = Event()  # Triggered from the EditorControls.
+        self.select_previous_filebtn = Event()  # Triggered from the EditorControls.
+        self.select_next_filebtn = Event()  # Triggered from the EditorControls.
         
+        # Keyboard shortcuts
+        self.shortcut_save = Event()
+        self.shortcut_move_filebtn_left = Event()
+        self.shortcut_previous_filebtn = Event()
+        self.shortcut_next_filebtn = Event()
+        self.shortcut_move_filebtn_right = Event()
+        self.shortcut_indent = Event()
+        self.shortcut_run_selection = Event()
+        self.shortcut_run_all = Event()
 
 class Event():
     """

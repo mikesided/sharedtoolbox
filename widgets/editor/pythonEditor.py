@@ -1,3 +1,8 @@
+"""
+    Name: pythonEditor.py
+    Description: Represents the QPlainTextEdit in which code is shown/edited
+    
+"""
 # System Imports
 import os
 import sys
@@ -47,16 +52,22 @@ class CodeEditor(QPlainTextEdit):
 
         self.setViewportMargins(LineNumberArea.WIDTH, 0, 0, 0)
         self.installEventFilter(self)
+
+        # Connections
+        event_handler.shortcut_indent.connect(self._indent_selection)
         
     def eventFilter(self, obj, event, *args):
         """Event Filter"""
+        if event.type() == QEvent.KeyPress:
+            text_cursor = self.textCursor()
+            key = event.key()
+            modifiers = event.modifiers()
+            # Catch shortcuts and fire signals
+            if self._handle_keyboard_shortcuts(key, modifiers):
+                return True
 
-        # Handle key pressed to make the editor more intelligent
-        if configs.Prefs.use_smart_editor:
-            if event.type() == QEvent.KeyPress:
-                text_cursor = self.textCursor()
-                key = event.key()
-                modifiers = event.modifiers()
+            # Smart Editor functionality
+            if configs.Prefs.use_smart_editor:
                 if key in [Qt.Key_Return, Qt.Key_Enter]:
                     # Handle new lines
                     self.event(event)
@@ -85,6 +96,32 @@ class CodeEditor(QPlainTextEdit):
         
         return super().eventFilter(obj, event)
     
+    def _handle_keyboard_shortcuts(self, key, modifiers):
+        """Checks to see if a keyboard shortcut was pressed
+        
+        Returns:
+            bool: Shortcut handled?
+        """
+        if key == Qt.Key_S and modifiers == Qt.KeyboardModifier.ControlModifier:
+            event_handler.shortcut_save.emit()
+        elif key == Qt.Key_Left and modifiers == Qt.KeyboardModifier.AltModifier:
+            event_handler.shortcut_previous_filebtn.emit()
+        elif key == Qt.Key_Right and modifiers == Qt.KeyboardModifier.AltModifier:
+            event_handler.shortcut_next_filebtn.emit()
+        elif key == Qt.Key_Left and modifiers == Qt.KeyboardModifier.AltModifier | Qt.KeyboardModifier.ControlModifier:
+            event_handler.move_filebtn_left.emit()
+        elif key == Qt.Key_Right and modifiers == Qt.KeyboardModifier.AltModifier | Qt.KeyboardModifier.ControlModifier:
+            event_handler.move_filebtn_right.emit()
+        elif key == Qt.Key_Backtab and modifiers == Qt.KeyboardModifier.ShiftModifier:
+            event_handler.shortcut_indent.emit()
+        elif key == Qt.Key_F3:
+            event_handler.shortcut_run_selection.emit()
+        elif key == Qt.Key_F5:
+            event_handler.shortcut_run_all.emit()
+        else:
+            return False
+        return True
+    
     
     def _set_new_line_indentation(self):
         """Handles a new line to set the indentation"""
@@ -101,7 +138,7 @@ class CodeEditor(QPlainTextEdit):
             self._move_to_next_indent()
             #indentation = indentation + 4
             #text_cursor.insertText(' ' * indentation)
-        elif line_keyword in ['break', 'continue', 'return', 'yield', ]:
+        elif line_keyword in ['break', 'continue', 'return', 'yield', 'pass']:
             # Decrease the indentation
             text_cursor.insertText(' ' * indentation)
             self._move_to_current_indent()
@@ -126,6 +163,10 @@ class CodeEditor(QPlainTextEdit):
         current_text = text_cursor.block().text()
         for i in range(4 - (current_text.count(' ') % 4)):
             text_cursor.insertText(' ')
+
+    def _indent_selection(self):
+        """Indent the selected lines (or the current line)"""
+        print('ok')
     
 
     def updateLineNumberArea(self, rect, dy):

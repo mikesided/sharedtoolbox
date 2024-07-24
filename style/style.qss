@@ -23,13 +23,23 @@ QFrame#fileswidget {
     padding-top: 3px;
 }
 
+QFrame#statuswidget {
+    border: none;
+    border-top: 1px solid @dark_2;
+}
+
+QFrame#statuswidget > QWidget {
+    font-size: 9px;
+    color: @white_disabled;
+}
+
 QFrame#filebutton {
     padding-left: 5px;
     padding-right: 5px;
     background: @dark_2;
     border-radius: 0px;
     border: 1px solid @dark_3;
-    padding-right: 2px;/*
+    padding-right: 3px;/*
     margin-top: 4px;
     padding-bottom: 4px;*/
 }
@@ -116,6 +126,7 @@ QLineEdit#searchbar {
 }
 
 QPushButton {
+    color: @black;
     background: @primary;
     border-radius: 3px;
     padding-left: 3px;
@@ -217,4 +228,12 @@ QPlainTextEdit#codeeditor {
 
 QWidget#codeeditorlines {
     color: @primary_disabled;
+}
+
+QToolTip {
+    font-family: Exo;
+    color: @white;
+    font-size: 11px;
+    background: @dark_1;
+    border: 2px solid @primary_active;
 }

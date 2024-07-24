@@ -1,3 +1,8 @@
+"""
+    Name: filesWidget.py
+    Description: Widget that holds the list of files, as buttons.
+                 Each button holds its editor, which is parented to the editor's stackedlayout.
+"""
 # System Imports
 import os
 import sys
@@ -13,107 +18,9 @@ import qtawesome
 # Local Imports
 from sharedtoolbox import configs, style, event_handler
 from sharedtoolbox.widgets.base import *
-from sharedtoolbox.widgets import pythonEditor
+from sharedtoolbox.widgets.editor import pythonEditor
 
 # ______________________________________________________________________________________________________________________
-
-class EditorWidget(QFrame):
-
-    def __init__(self, *args, **kwargs):
-        super(EditorWidget, self).__init__(objectName='editorwidget', *args, **kwargs)
-        self.setMinimumWidth(40)
-
-        # Properties
-
-        # Widgets
-        self.editor_controls_wid = EditorControls()
-        self.files_wid = FilesWidget()
-
-        # Layout
-        self.setLayout(QVBoxLayout())
-        self.layout().setContentsMargins(0, 0, 0, 0)
-        self.layout().addWidget(self.editor_controls_wid)
-        self.layout().addWidget(self.files_wid)
-
-        self.init_ui()
-
-        # Connections
-        self.editor_controls_wid.save.connect(self.save_file)
-        self.editor_controls_wid.run_all.connect(self.run_all)
-        self.editor_controls_wid.run_selection.connect(self.run_selection)
-        
-        # Init
-
-    def init_ui(self):
-        """Init UI"""
-        pass
-
-    def save_file(self):
-        """Saves the current file, if any"""
-        btn = self.files_wid.selected_file_btn
-        if btn:
-            with open(btn.file, 'w') as f:
-                f.write(btn.editor.toPlainText())
-
-    def run_all(self):
-        """Run the current script"""
-        user_code = self.files_wid.selected_file_btn.editor.toPlainText()
-        self._run_code(user_code)
-
-    def run_selection(self):
-        """Run the selected text of the current script"""
-        user_code = self.files_wid.selected_file_btn.editor.textCursor().selection().toPlainText()
-        self._run_code(user_code)
-
-    def _run_code(self, user_code):
-        """Runs the given user_code
-        
-        Args:
-            user_code (str): Code to run
-        """
-        exec(user_code)
-
-class EditorControls(QFrame):
-
-    save = Signal()
-    run_selection = Signal()
-    run_all = Signal()
-    def __init__(self, *args, **kwargs):
-        super(EditorControls, self).__init__(objectName='editorcontrols', *args, **kwargs)
-        self.setFixedHeight(40)
-
-        # Widgets
-        self.btn_save = QPushButton(icon=qtawesome.icon('fa.save', color=style.STYLE.get('primary'), options=[{'scale_factor': 1.25}]))
-        self.btn_run_selection = QPushButton(icon=qtawesome.icon('ph.play-light', color=style.STYLE.get('primary'), options=[{'scale_factor': 1.25}]))
-        self.btn_run_all = QPushButton(icon=qtawesome.icon('ph.play-fill', color=style.STYLE.get('primary'), options=[{'scale_factor': 1.25}]))
-        
-        # Layout
-        self.setLayout(QHBoxLayout())
-        self.layout().setContentsMargins(10, 0, 10, 0)
-        self.layout().setSpacing(4)
-
-        self.layout().addWidget(self.btn_save)
-        self.layout().addItem(HSpacer())
-        self.layout().addWidget(self.btn_run_selection)
-        self.layout().addWidget(self.btn_run_all)
-        self.layout().addItem(HSpacer())
-
-        self._set_btn_options()
-
-        # Connections
-        self.btn_save.clicked.connect(self.save.emit)
-        self.btn_run_all.clicked.connect(self.run_all.emit)
-        self.btn_run_selection.clicked.connect(self.run_selection.emit)
-
-    def _set_btn_options(self):
-        """Set default styling options to buttons"""
-        for i in range(self.layout().count()):
-            item = self.layout().itemAt(i)
-            if item and hasattr(item, 'widget') and isinstance(item.widget(), QPushButton):
-                btn = item.widget()
-                btn.setObjectName('icon')
-                btn.setStyleSheet(btn.styleSheet())
-                btn.setFixedSize(QSize(24, 24))
 
 
 class FilesWidget(QFrame):
@@ -141,12 +48,19 @@ class FilesWidget(QFrame):
 
         # Connections
         event_handler.file_clicked.connect(self._add_file_tab)
+        event_handler.move_filebtn_left.connect(self._move_filebtn_left)
+        event_handler.move_filebtn_right.connect(self._move_filebtn_right)
+        event_handler.shortcut_move_filebtn_left.connect(self._move_filebtn_left)
+        event_handler.shortcut_move_filebtn_right.connect(self._move_filebtn_right)
+        event_handler.shortcut_previous_filebtn.connect(self._select_previous_filebtn)
+        event_handler.shortcut_next_filebtn.connect(self._select_next_filebtn)
 
         # Init
         self.stacked_layout.addWidget(QLabel(text='\n\nSelect a file to get started..', 
                                              alignment=Qt.AlignHCenter, enabled=False))
         for file in configs.Prefs.get_pinned_files():
-            self._add_file_tab(file, pinned=True)
+            if os.path.isfile(file):
+                self._add_file_tab(file, pinned=True)
         if self._file_btns:
             self.select_btn(self._file_btns[0])
 
@@ -164,6 +78,7 @@ class FilesWidget(QFrame):
         btn.selected = True
         self.stacked_layout.setCurrentWidget(btn.editor)
         self.selected_file_btn = btn
+        event_handler.file_opened.emit(btn.file)
         
     def _add_file_tab(self, file, pinned=False):
         """Adds a file tab
@@ -206,10 +121,8 @@ class FilesWidget(QFrame):
                         self.select_btn(None)
 
         self._file_btns.remove(btn)
-        btn.editor.setParent(None)
-        btn.editor = None
-        btn.setParent(None)
-        btn = None
+        btn.editor.deleteLater()
+        btn.deleteLater()
 
     def _on_filebtn_pinnedChanged(self, btn, pinned):
         """Triggered when a filebutton has been pinned/unpinned
@@ -233,24 +146,73 @@ class FilesWidget(QFrame):
                     self.btn_layout.insertWidget(i-1, btn)
                     break
 
+    def _move_filebtn_left(self):
+        """Moves the current file button to the left"""
+        if not self.selected_file_btn:
+            return
+        current_index = self.btn_layout.indexOf(self.selected_file_btn)
+        if current_index == 0:
+            return
+        prev_btn = self.btn_layout.itemAt(current_index-1).widget()
+        if not self.selected_file_btn.pinned and prev_btn.pinned:
+            # Do not allow unpinned tabs to move into pinned ones
+            return
+        self.btn_layout.insertWidget(current_index-1, self.selected_file_btn)
+        # Swap pinned files in configs
+        configs.Prefs.swap_pinned_files(self.selected_file_btn.file, prev_btn.file)
+        
+
+    def _move_filebtn_right(self):
+        """Moves the current file button to the right"""
+        if not self.selected_file_btn:
+            return
+        current_index = self.btn_layout.indexOf(self.selected_file_btn)
+        if current_index >= self.btn_layout.count() - 2:
+            return
+        next_btn = self.btn_layout.itemAt(current_index+1).widget()
+        if self.selected_file_btn.pinned and not next_btn.pinned:
+            # Do not allow pinned tabs to move into unpinned tabs
+            return
+        self.btn_layout.insertWidget(current_index+1, self.selected_file_btn)
+        # Swap pinned files in configs
+        configs.Prefs.swap_pinned_files(self.selected_file_btn.file, next_btn.file)
+
+    def _select_previous_filebtn(self):
+        if not self.selected_file_btn:
+            return
+        current_index = self.btn_layout.indexOf(self.selected_file_btn)
+        if current_index >= 1:
+            prev_btn = self.btn_layout.itemAt(current_index-1).widget()
+            prev_btn.clicked.emit()
+
+    def _select_next_filebtn(self):
+        if not self.selected_file_btn:
+            return
+        current_index = self.btn_layout.indexOf(self.selected_file_btn)
+        if current_index < self.btn_layout.count() - 2:
+            next_btn = self.btn_layout.itemAt(current_index+1).widget()
+            next_btn.clicked.emit()
+
 
 class FileButton(QFrame):
 
     clicked = Signal()
     closed = Signal()
     pinnedChanged = Signal(bool)
-    def __init__(self, file, pinned=False, *args, **kwargs):
+    def __init__(self, file, pinned=False, volatile=False, *args, **kwargs):
         """Constructor
         The button that lives in the FilesWidget. Also contains its python code editor
         
         Args:
             file (str): File path
             pinned (bool): Is file pinned to fileswidget? Defaults to False
+            volatile (bool): Is this file a volatile (temporary) tab? Defaults to False.
         """
         super(FileButton, self).__init__(objectName='filebutton', *args, **kwargs)
         self.setFixedHeight(24)
         self.file = os.path.normpath(file)
         self._pinned = pinned
+        self.volatile = volatile
 
         # Widgets
         self.icon_locked = qtawesome.icon('fa.lock', color=style.STYLE.get('primary'))
@@ -310,6 +272,8 @@ class FileButton(QFrame):
             self.btn_lock.setIcon(self.icon_unlocked)
         if before_state != pinned:
             self.pinnedChanged.emit(pinned)
+        if pinned is False and self.selected is False:
+            self.btn_lock.setVisible(False)
 
     def _on_btn_lock_clicked(self):
         """Pins/Unpins the file"""

@@ -26,15 +26,23 @@ PROJECT_ROOT_PATH = ''
 PROJECT_SCRIPT_LOCATION = '.sharedtoolbox/scripts'
             
 
+
 class Prefs:
     
     use_smart_editor = None
+    main_window_size = None
+    nav_widget_size = None
+    editor_widget_size = None
     
     def __init__(self):
         data = self._read_prefs_data()
 
         Prefs.use_smart_editor = data.get('use_smart_editor', True)
-    
+        Prefs.main_window_size = data.get('main_window_size', (800, 600))
+        Prefs.nav_widget_size = data.get('nav_widget_size', (200, 600))
+        Prefs.editor_widget_size = data.get('editor_widget_size', (600, 600))
+
+                
     @staticmethod
     def _read_prefs_data():
         with open(PREFS_FILE_PATH, 'r') as f:
@@ -44,7 +52,19 @@ class Prefs:
     @staticmethod
     def _save_prefs_data(data):
         with open(PREFS_FILE_PATH, 'w') as f:
-            f.write(json.dumps(data))
+            f.write(json.dumps(data, indent=4))
+
+    @classmethod
+    def set_pref_data(cls, key, value):
+        """Sets the value to a given key in the preferences file
+        
+        Args:
+            key (str): Json key
+            value: Value to set
+        """
+        data = cls._read_prefs_data()
+        data[key] = value
+        cls._save_prefs_data(data)
 
     @classmethod
     def add_pinned_file(cls, file):
@@ -56,7 +76,7 @@ class Prefs:
 
     @classmethod
     def remove_pinned_file(cls, file):
-        """Removes a pinned file to the configs"""
+        """Removes a pinned file from the configs"""
         data = cls._read_prefs_data()
         data.setdefault('pinned_files', [])
         data['pinned_files'].remove(file)
@@ -71,6 +91,22 @@ class Prefs:
         """
         data = cls._read_prefs_data()
         return data.get('pinned_files', [])
+    
+    @classmethod
+    def swap_pinned_files(cls, file_1, file_2):
+        """Swap two pinned files from configs
+        
+        Args:
+            file_1 (str): First file path to swap
+            file_2 (str): Second file path to swap
+        """
+        # Swap pinned files in configs
+        pinned_files = cls.get_pinned_files()
+        if file_1 in pinned_files and file_2 in pinned_files:
+            f1 = pinned_files.index(file_1)
+            f2 = pinned_files.index(file_2)
+            pinned_files[f1], pinned_files[f2] = pinned_files[f2], pinned_files[f1]
+            cls.set_pref_data(key='pinned_files', value=pinned_files)
 
 
 # ______________________________________________________________________________________________________________________
