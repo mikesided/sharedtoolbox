@@ -29,18 +29,26 @@ PROJECT_SCRIPT_LOCATION = '.sharedtoolbox/scripts'
 
 class Prefs:
     
-    use_smart_editor = None
-    main_window_size = None
+    # General
     nav_widget_size = None
     editor_widget_size = None
+    main_window_size = None
+
+    # Tool Prefs
+    use_smart_editor = None
+    editor_theme = None
+    editor_font = None
     
     def __init__(self):
         data = self._read_prefs_data()
 
-        Prefs.use_smart_editor = data.get('use_smart_editor', True)
         Prefs.main_window_size = data.get('main_window_size', (800, 600))
         Prefs.nav_widget_size = data.get('nav_widget_size', (200, 600))
         Prefs.editor_widget_size = data.get('editor_widget_size', (600, 600))
+
+        Prefs.use_smart_editor = data.get('use_smart_editor', True)
+        Prefs.editor_theme = data.get('editor_theme', 'native')
+        Prefs.editor_font = data.get('editor_font', 'Consolas')
 
                 
     @staticmethod

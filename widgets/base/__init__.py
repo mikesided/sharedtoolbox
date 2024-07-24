@@ -15,6 +15,7 @@ __all__ = [
     'HSpacer',
     'VLine',
     'HLine',
+    'QComboBoxNoWheel',
     'HScrollLayout', 
     'VScrollLayout', 
     'FlowLayout',
@@ -110,6 +111,15 @@ class HLine(QFrame):
         self.setFrameShape(QFrame.HLine)
         self.setFrameShadow(QFrame.Sunken)
         self.setFixedHeight(h)
+
+class QComboBoxNoWheel(QComboBox):
+
+    def __init__(self, *args, **kwargs):
+        super(QComboBoxNoWheel, self).__init__(*args, **kwargs)
+        self.setView(QListView())
+
+    def wheelEvent(self, event):
+        event.ignore()
 
 class FlowLayout(QLayout):
     """Custom layout that mimics the behaviour of a flow layout"""

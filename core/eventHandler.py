@@ -32,10 +32,14 @@ class EventHandler(object, metaclass=Singleton):
         """
         self.file_clicked = Event(str) # File path. Triggered from the navigation
         self.file_opened = Event(str) # File path. Triggered from the FilesWidget. This is the current editor displayed
+        self.file_state_changed = Event(bool) # True: Saved. False: Unsaved.  Only the current file emits this signal.
+        self.file_saved = Event(str) # File path.
         self.move_filebtn_left = Event()  # Triggered from the EditorControls.
         self.move_filebtn_right = Event()  # Triggered from the EditorControls.
         self.select_previous_filebtn = Event()  # Triggered from the EditorControls.
         self.select_next_filebtn = Event()  # Triggered from the EditorControls.
+        self.theme_changed = Event(str) # Theme.
+        self.font_changed = Event(str) # Font.
         
         # Keyboard shortcuts
         self.shortcut_save = Event()

@@ -44,7 +44,7 @@ class CodeEditor(QPlainTextEdit):
         self.setLineWrapMode(QPlainTextEdit.NoWrap)
         self.setObjectName('codeeditor')
         self.lineNumberArea = LineNumberArea(self)
-        self._highlighter = CodeSyntaxHighlight(self.document(), 'python', 'monokai')
+        self._set_theme()
 
         self.connect(self, SIGNAL('updateRequest(QRect,int)'), self.updateLineNumberArea)
         self.connect(self, SIGNAL('cursorPositionChanged()'), self.highlightCurrentLine)
@@ -55,6 +55,8 @@ class CodeEditor(QPlainTextEdit):
 
         # Connections
         event_handler.shortcut_indent.connect(self._indent_selection)
+        event_handler.theme_changed.connect(self._set_theme)
+        event_handler.font_changed.connect(self._set_theme)
         
     def eventFilter(self, obj, event, *args):
         """Event Filter"""
@@ -167,6 +169,23 @@ class CodeEditor(QPlainTextEdit):
     def _indent_selection(self):
         """Indent the selected lines (or the current line)"""
         print('ok')
+
+    def _set_theme(self, *args):
+        """Apply a new theme"""
+        self._highlighter = CodeSyntaxHighlight(self.document(), 'python', configs.Prefs.editor_theme)
+
+        # Set font
+        for k, v in self._highlighter.formatter._style.items():
+            if hasattr(v, "setFontFamilies"):
+                v.setFontFamilies([configs.Prefs.editor_font])
+            else:
+                v.setFontFamily(configs.Prefs.editor_font)
+
+        # Additional background colors, not used
+        background_color = self._highlighter.formatter.style.background_color
+        highlight_color = self._highlighter.formatter.style.highlight_color
+        line_number_color = self._highlighter.formatter.style.line_number_color
+        #self.setStyleSheet('background-color: {};'.format(highlight_color))
     
 
     def updateLineNumberArea(self, rect, dy):

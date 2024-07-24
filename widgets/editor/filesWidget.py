@@ -50,10 +50,14 @@ class FilesWidget(QFrame):
         event_handler.file_clicked.connect(self._add_file_tab)
         event_handler.move_filebtn_left.connect(self._move_filebtn_left)
         event_handler.move_filebtn_right.connect(self._move_filebtn_right)
+        event_handler.select_previous_filebtn.connect(self._select_previous_filebtn)
+        event_handler.select_next_filebtn.connect(self._select_next_filebtn)
+        event_handler.shortcut_next_filebtn.connect(self._select_next_filebtn)
         event_handler.shortcut_move_filebtn_left.connect(self._move_filebtn_left)
         event_handler.shortcut_move_filebtn_right.connect(self._move_filebtn_right)
         event_handler.shortcut_previous_filebtn.connect(self._select_previous_filebtn)
         event_handler.shortcut_next_filebtn.connect(self._select_next_filebtn)
+        event_handler.file_saved.connect(self._on_file_saved)
 
         # Init
         self.stacked_layout.addWidget(QLabel(text='\n\nSelect a file to get started..', 
@@ -63,6 +67,7 @@ class FilesWidget(QFrame):
                 self._add_file_tab(file, pinned=True)
         if self._file_btns:
             self.select_btn(self._file_btns[0])
+
 
     def select_btn(self, btn):
         """Selects the given button
@@ -79,6 +84,7 @@ class FilesWidget(QFrame):
         self.stacked_layout.setCurrentWidget(btn.editor)
         self.selected_file_btn = btn
         event_handler.file_opened.emit(btn.file)
+        event_handler.file_state_changed.emit(btn.clean)
         
     def _add_file_tab(self, file, pinned=False):
         """Adds a file tab
@@ -193,6 +199,16 @@ class FilesWidget(QFrame):
             next_btn = self.btn_layout.itemAt(current_index+1).widget()
             next_btn.clicked.emit()
 
+    def _on_file_saved(self, file):
+        """Triggered when a file was saved
+        Set the filebutton to clean
+        """
+        for btn in self._file_btns:
+            if file == btn.file:
+                btn.clean = True
+                if self.selected_file_btn == btn:
+                    event_handler.file_state_changed.emit(btn.clean)
+                break
 
 class FileButton(QFrame):
 
@@ -213,6 +229,7 @@ class FileButton(QFrame):
         self.file = os.path.normpath(file)
         self._pinned = pinned
         self.volatile = volatile
+        self.clean = True
 
         # Widgets
         self.icon_locked = qtawesome.icon('fa.lock', color=style.STYLE.get('primary'))
@@ -235,6 +252,7 @@ class FileButton(QFrame):
         self.selected = False
 
         # Connections
+        self.editor.textChanged.connect(self._on_editor_textChanged)
         self.btn_lock.clicked.connect(self._on_btn_lock_clicked)
         self.btn_close.clicked.connect(self._on_btn_close_clicked)
 
@@ -289,6 +307,16 @@ class FileButton(QFrame):
         """Reads the file and set it to the editor"""
         with open(self.file, 'r') as f:
             self.editor.setPlainText(f.read())
+        self.clean = True
+
+    def _on_editor_textChanged(self):
+        """Sets the filebutton as not clean"""
+        if self.clean:
+            self.clean = False
+            event_handler.file_state_changed.emit(False)
+        else:
+            self.clean = False
+
 
     def mousePressEvent(self, event):
         self.clicked.emit()

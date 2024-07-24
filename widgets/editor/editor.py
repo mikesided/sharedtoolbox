@@ -50,8 +50,10 @@ class EditorWidget(QFrame):
         """Saves the current file, if any"""
         btn = self.files_wid.selected_file_btn
         if btn:
-            with open(btn.file, 'w') as f:
+            file = btn.file
+            with open(file, 'w') as f:
                 f.write(btn.editor.toPlainText())
+            event_handler.file_saved.emit(file)
 
     def reveal_file(self):
         """Reveal the current file in a file explorer, if any"""
