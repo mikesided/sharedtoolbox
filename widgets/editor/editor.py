@@ -104,8 +104,10 @@ class EditorControls(QFrame):
                                     toolTip='[Alt+RightArrow] Open the next tab')
         self.btn_move_btn_r = QPushButton(icon=qtawesome.icon('fa.angle-double-right', color=style.STYLE.get('primary'), options=[{'scale_factor': 1.25}]),
                                     toolTip='[Ctrl+Alt+RightArrow] Move the current tab to the right')
+        self.btn_unindent = QPushButton(icon=qtawesome.icon('ri.indent-decrease', color=style.STYLE.get('primary'), options=[{'scale_factor': 1.25}]),
+                                    toolTip='[Tab] Decrease indentation on selected lines')
         self.btn_indent = QPushButton(icon=qtawesome.icon('ri.indent-increase', color=style.STYLE.get('primary'), options=[{'scale_factor': 1.25}]),
-                                    toolTip='[Shift+Tab] Indent selected lines')
+                                    toolTip='[Tab] Increase indentation on selected lines')
         self.btn_run_selection = QPushButton(icon=qtawesome.icon('ph.play-light', color=style.STYLE.get('primary'), options=[{'scale_factor': 1.25}]),
                                              toolTip='[F3] Run highlighted code')
         self.btn_run_all = QPushButton(icon=qtawesome.icon('ph.play-fill', color=style.STYLE.get('primary'), options=[{'scale_factor': 1.25}]),
@@ -119,12 +121,13 @@ class EditorControls(QFrame):
         self.layout().addWidget(self.btn_save)
         self.layout().addWidget(self.btn_reveal)
         self.layout().addItem(Spacer(w=30))
+        self.layout().addWidget(self.btn_unindent) # TO CONNECT
+        self.layout().addWidget(self.btn_indent) # TO CONNECT
+        self.layout().addItem(Spacer(w=30))
         self.layout().addWidget(self.btn_move_btn_l)
         self.layout().addWidget(self.btn_prev_btn)
         self.layout().addWidget(self.btn_next_btn)
         self.layout().addWidget(self.btn_move_btn_r)
-        self.layout().addItem(Spacer(w=30))
-        self.layout().addWidget(self.btn_indent) # TO CONNECT
         self.layout().addItem(HSpacer())
         self.layout().addWidget(self.btn_run_selection)
         self.layout().addWidget(self.btn_run_all)

@@ -48,6 +48,7 @@ class EventHandler(object, metaclass=Singleton):
         self.shortcut_next_filebtn = Event()
         self.shortcut_move_filebtn_right = Event()
         self.shortcut_indent = Event()
+        self.shortcut_unindent = Event()
         self.shortcut_run_selection = Event()
         self.shortcut_run_all = Event()
 
