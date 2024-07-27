@@ -28,18 +28,18 @@ class NavigationWidget(QFrame):
         self.nav_tree = QTreeView()
         self.nav_tree.header().hide()
         self.proxy_model = FilterProxyModel()
-        self.btn_new_script = QPushButton('New', objectName='box', enabled=False,
+        self.btn_new_script = QPushButton(objectName='icon', enabled=False, toolTip='Create a new script in selected location',
                                           icon=qtawesome.icon('fa5b.python', color=style.STYLE.get('primary')))
-        self.btn_open_dir = QPushButton('Open', objectName='box', enabled=False,
+        self.btn_open_dir = QPushButton(objectName='icon', enabled=False, toolTip='Open selected location',
                                           icon=qtawesome.icon('ei.folder-open', color=style.STYLE.get('primary')))
-        self.btn_reload = QPushButton(text='Reload', objectName='box',
+        self.btn_reload = QPushButton(objectName='icon', toolTip='Reload scripts',
                                       icon=qtawesome.icon('mdi.reload', color=style.STYLE.get('primary')))
         self.search_bar = QLineEdit(placeholderText='Search..', objectName='searchbar', fixedHeight=24)
 
         # Layout
         self.header_layout = QHBoxLayout()
         self.header_layout.setContentsMargins(8, 8, 8, 0)
-        self.header_layout.setSpacing(8)
+        self.header_layout.setSpacing(4)
         self.body_layout = QVBoxLayout()
         self.body_layout.setContentsMargins(0, 0, 0, 0)
         self.scroll_layout = VScrollLayout()
@@ -212,6 +212,7 @@ class NavigationWidget(QFrame):
         pass
 
     def iter_tree_items(self):
+        """WIP: Related on _on_editor_file_opened"""
         root = self.model.invisibleRootItem()
         def recurse(parent):
             for row in range(parent.rowCount()):

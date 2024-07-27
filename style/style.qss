@@ -171,8 +171,7 @@ QPushButton#icon:pressed {
 }
 
 QPushButton#icon:disabled {
-    background: @dark_2;
-    border: 1px solid @black_disabled;
+    background: transparent;
 }
 
 QPushButton#box {

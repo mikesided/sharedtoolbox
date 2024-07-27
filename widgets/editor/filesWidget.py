@@ -18,6 +18,8 @@ import qtawesome
 # Local Imports
 from sharedtoolbox import configs, style, event_handler
 from sharedtoolbox.widgets.base import *
+
+from sharedtoolbox.dialogs import infoDialog
 from sharedtoolbox.widgets.editor import pythonEditor
 
 # ______________________________________________________________________________________________________________________
@@ -82,6 +84,7 @@ class FilesWidget(QFrame):
             btn_.selected = False
         btn.selected = True
         self.stacked_layout.setCurrentWidget(btn.editor)
+        btn.editor.setFocus()
         self.selected_file_btn = btn
         event_handler.file_opened.emit(btn.file)
         event_handler.file_state_changed.emit(btn.clean)
@@ -300,6 +303,10 @@ class FileButton(QFrame):
     def _on_btn_close_clicked(self):
         """Close the file, unpin if pinned"""
         if self.pinned:
+            dlg = infoDialog.InfoDialog(text='Are you sure you want to close a pinned file?', desc=self.file, confirm=True)
+            result = dlg.exec()
+            if not result:
+                return
             self.pinned = False
         self.closed.emit()
 
