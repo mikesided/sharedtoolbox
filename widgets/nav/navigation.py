@@ -32,8 +32,6 @@ class NavigationWidget(QFrame):
                                           icon=qtawesome.icon('fa5b.python', color=style.STYLE.get('primary')))
         self.btn_open_dir = QPushButton(objectName='icon', enabled=False, toolTip='Open selected location',
                                           icon=qtawesome.icon('ei.folder-open', color=style.STYLE.get('primary')))
-        self.btn_reload = QPushButton(objectName='icon', toolTip='Reload scripts',
-                                      icon=qtawesome.icon('mdi.reload', color=style.STYLE.get('primary')))
         self.search_bar = QLineEdit(placeholderText='Search..', objectName='searchbar', fixedHeight=24)
 
         # Layout
@@ -55,7 +53,6 @@ class NavigationWidget(QFrame):
         self.body_layout.addWidget(self.scroll_layout.scroll_area)
         self.scroll_layout.addWidget(self.nav_tree)
 
-        self.init_ui()
         self.init_header_layout()
 
         # Connections
@@ -87,9 +84,10 @@ class NavigationWidget(QFrame):
         else:
             return None
 
-    def init_ui(self):
-        """Init UI"""
-        pass
+    def reload(self):
+        """Reload tool"""
+        self._set_new_model()
+        self._load_scripts()
 
     def init_header_layout(self):
         """Init the header layout"""
@@ -97,8 +95,6 @@ class NavigationWidget(QFrame):
         self.header_layout.addItem(HSpacer())
         self.header_layout.addWidget(self.btn_new_script)
         self.header_layout.addWidget(self.btn_open_dir)
-        self.header_layout.addWidget(VLine())
-        self.header_layout.addWidget(self.btn_reload)
 
     def _set_new_model(self):
         """Sets a new model on the treeview"""
@@ -129,7 +125,7 @@ class NavigationWidget(QFrame):
         _item_cache = {}
 
         # Local scripts
-        local_script_path = os.environ.get(configs.LOCAL_SCRIPT_ENV_VAR, configs.LOCAL_SCRIPT_PATH)
+        local_script_path = configs.Prefs.get_local_script_path()
         local_item = ContainerItem(local_script_path, 'Local')
         self.model.appendRow(local_item)
         _item_cache[local_script_path] = local_item
@@ -147,10 +143,10 @@ class NavigationWidget(QFrame):
                         _item_cache.get(root).appendRow(itemN)
                     
         # Shared scripts
-        shared_script_path = os.environ.get(configs.SHARED_SCRIPT_ENV_VAR, configs.SHARED_SCRIPT_PATH)
+        shared_script_path = configs.Prefs.get_shared_script_path()
         shared_item = ContainerItem(shared_script_path, 'Shared')
         self.model.appendRow(shared_item)
-        _item_cache[local_script_path] = shared_item
+        _item_cache[shared_script_path] = shared_item
 
         if os.path.exists(shared_script_path):
             for root, dirs, files in os.walk(shared_script_path):
@@ -165,13 +161,13 @@ class NavigationWidget(QFrame):
                         _item_cache.get(root).appendRow(itemN)
 
         # Project Scripts
-        project_root_path = os.environ.get(configs.PROJECT_ROOT_ENV_VAR, configs.PROJECT_ROOT_PATH)
-        project_script_location = os.environ.get(configs.PROJECT_SCRIPT_LOCATION_ENV_VAR, configs.PROJECT_SCRIPT_LOCATION)
+        project_root_path = configs.Prefs.get_project_root_path()
+        project_script_location = configs.Prefs.get_project_script_location()
         project_item = ContainerItem(None, 'Projects')
         self.model.appendRow(project_item)
         _item_cache[local_script_path] = shared_item
 
-        if os.path.exists(project_root_path):
+        if project_root_path and os.path.exists(project_root_path):
             for dir in os.listdir(project_root_path):
                 dir_path = os.path.join(project_root_path, dir)
                 if not os.path.isdir(dir_path):

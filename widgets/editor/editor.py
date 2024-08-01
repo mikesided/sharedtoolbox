@@ -42,9 +42,22 @@ class EditorWidget(QFrame):
         self.layout().addWidget(self.files_wid)
 
         # Connections
+        event_handler.shortcut_new_temp_file.connect(self.new_temp_file)
         event_handler.shortcut_save.connect(self.save_file)
         event_handler.shortcut_run_selection.connect(self.run_selection)
         event_handler.shortcut_run_all.connect(self.run_all)
+
+    def reload(self):
+        """Reload the widget"""
+        self.files_wid.deleteLater()
+        self.files_wid = filesWidget.FilesWidget()
+        self.layout().addWidget(self.files_wid)
+
+    def new_temp_file(self):
+        """Creates a new temp file"""
+        fd, file = tempfile.mkstemp(suffix='.py', dir=configs.TEMP_SCRIPT_PATH)
+        os.close(fd)
+        self.files_wid._add_file_tab(file=file)
 
     def save_file(self):
         """Saves the current file, if any"""
@@ -82,6 +95,7 @@ class EditorWidget(QFrame):
 
     def _exit_handler(self):
         """Triggered on app quit"""
+        self.files_wid._exit_handler()
         configs.Prefs.set_pref_data('editor_widget_size', (self.width(), self.height()))
 
 class EditorControls(QFrame):
@@ -92,6 +106,8 @@ class EditorControls(QFrame):
         self.setFixedHeight(40)
 
         # Widgets
+        self.btn_new_temp_file = QPushButton(icon=qtawesome.icon('fa.plus', color=style.STYLE.get('primary'), options=[{'scale_factor': 1.25}]),
+                                    toolTip='[Ctrl+N] Create a new temporary file')
         self.btn_save = QPushButton(icon=qtawesome.icon('fa.save', color=style.STYLE.get('primary'), options=[{'scale_factor': 1.25}]),
                                     toolTip='[Ctrl+S] Save the current file')
         self.btn_reveal = QPushButton(icon=qtawesome.icon('ei.folder-open', color=style.STYLE.get('primary'), options=[{'scale_factor': 1.25}]),
@@ -118,6 +134,7 @@ class EditorControls(QFrame):
         self.layout().setContentsMargins(10, 0, 10, 0)
         self.layout().setSpacing(4)
 
+        self.layout().addWidget(self.btn_new_temp_file)
         self.layout().addWidget(self.btn_save)
         self.layout().addWidget(self.btn_reveal)
         self.layout().addItem(Spacer(w=30))
@@ -136,6 +153,7 @@ class EditorControls(QFrame):
         self._set_btn_options()
 
         # Connections        
+        self.btn_new_temp_file.clicked.connect(self.editor.new_temp_file)
         self.btn_save.clicked.connect(self.editor.save_file)
         self.btn_reveal.clicked.connect(self.editor.reveal_file)
         self.btn_move_btn_l.clicked.connect(event_handler.move_filebtn_left.emit)

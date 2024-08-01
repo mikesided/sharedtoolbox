@@ -64,12 +64,11 @@ class FilesWidget(QFrame):
         # Init
         self.stacked_layout.addWidget(QLabel(text='\n\nSelect a file to get started..', 
                                              alignment=Qt.AlignHCenter, enabled=False))
-        for file in configs.Prefs.get_pinned_files():
+        for file in configs.Prefs.get_pinned_files(valid_only=True):
             if os.path.isfile(file):
                 self._add_file_tab(file, pinned=True)
         if self._file_btns:
             self.select_btn(self._file_btns[0])
-
 
     def select_btn(self, btn):
         """Selects the given button
@@ -213,35 +212,39 @@ class FilesWidget(QFrame):
                     event_handler.file_state_changed.emit(btn.clean)
                 break
 
+    def _exit_handler(self):
+        """Triggered when the app quits"""
+        for btn in self._file_btns:
+            btn.closed_handler()
+
 class FileButton(QFrame):
 
     clicked = Signal()
     closed = Signal()
     pinnedChanged = Signal(bool)
-    def __init__(self, file, pinned=False, volatile=False, *args, **kwargs):
+    def __init__(self, file, pinned=False, *args, **kwargs):
         """Constructor
         The button that lives in the FilesWidget. Also contains its python code editor
         
         Args:
             file (str): File path
             pinned (bool): Is file pinned to fileswidget? Defaults to False
-            volatile (bool): Is this file a volatile (temporary) tab? Defaults to False.
         """
         super(FileButton, self).__init__(objectName='filebutton', *args, **kwargs)
         self.setFixedHeight(24)
         self.file = os.path.normpath(file)
         self._pinned = pinned
-        self.volatile = volatile
+        self.volatile = True if self.file.startswith(configs.TEMP_SCRIPT_PATH) else False
         self.clean = True
 
         # Widgets
         self.icon_locked = qtawesome.icon('fa.lock', color=style.STYLE.get('primary'))
         self.icon_unlocked = qtawesome.icon('fa.unlock', color=style.STYLE.get('white_disabled'))
         self.icon_close = qtawesome.icon('fa.close', color=style.STYLE.get('white_disabled'))
-        self.btn_lock = QPushButton(fixedSize=QSize(16, 16), objectName='invisible', visible=False,
+        self.btn_lock = QPushButton(fixedSize=QSize(16, 16), objectName='invisible',
                                     icon=self.icon_locked if pinned else self.icon_unlocked)
         self.lbl_name = QLabel(text=os.path.normpath(file).split(os.sep)[-1], alignment=Qt.AlignCenter)
-        self.btn_close = QPushButton(objectName='invisible', fixedSize=QSize(10, 16))
+        self.btn_close = QPushButton(objectName='icon', fixedSize=QSize(16, 16))
         self.editor = pythonEditor.CodeEditor()
 
         # Layout
@@ -262,6 +265,9 @@ class FileButton(QFrame):
         # Init
         self._read_file()
 
+        # Volatile file settings
+        if self.volatile:
+            self.lbl_name.setText('python')
 
     @property
     def selected(self):
@@ -272,10 +278,6 @@ class FileButton(QFrame):
         self._selected = selected
         self.setProperty('selected', selected)
         self.setStyleSheet(self.styleSheet())
-        if selected:
-            self.btn_lock.setVisible(True)
-        elif not self.pinned:
-            self.btn_lock.setVisible(False)
 
     @property
     def pinned(self):
@@ -293,12 +295,16 @@ class FileButton(QFrame):
             self.btn_lock.setIcon(self.icon_unlocked)
         if before_state != pinned:
             self.pinnedChanged.emit(pinned)
-        if pinned is False and self.selected is False:
-            self.btn_lock.setVisible(False)
 
     def _on_btn_lock_clicked(self):
-        """Pins/Unpins the file"""
-        self.pinned = not self.pinned
+        """
+        Pins/Unpins the file.
+        Only trigger if the tab is selected, else mimick a file button click
+        """
+        if self.selected:
+            self.pinned = not self.pinned
+        else:
+            self.clicked.emit()
 
     def _on_btn_close_clicked(self):
         """Close the file, unpin if pinned"""
@@ -308,6 +314,7 @@ class FileButton(QFrame):
             if not result:
                 return
             self.pinned = False
+        self.closed_handler()
         self.closed.emit()
 
     def _read_file(self):
@@ -324,6 +331,13 @@ class FileButton(QFrame):
         else:
             self.clean = False
 
+    def closed_handler(self):
+        """
+        Triggered when the button is closed / app quits.
+        Delete temporary files if unpinned
+        """
+        if self.volatile and not self.pinned:
+            os.remove(self.file)
 
     def mousePressEvent(self, event):
         self.clicked.emit()

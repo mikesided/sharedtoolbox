@@ -26,7 +26,7 @@ class StatusBarWidget(QFrame):
 
     def __init__(self, *args, **kwargs):
         super(StatusBarWidget, self).__init__(objectName='statuswidget', *args, **kwargs)
-        self.setFixedHeight(18)
+        self.setFixedHeight(22)
 
         # Widgets
         self.lbl_current_file = QLabel()

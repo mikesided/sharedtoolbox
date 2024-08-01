@@ -40,8 +40,10 @@ class EventHandler(object, metaclass=Singleton):
         self.select_next_filebtn = Event()  # Triggered from the EditorControls.
         self.theme_changed = Event(str) # Theme.
         self.font_changed = Event(str) # Font.
+        self.profile_changed = Event(str) # New profile name.
         
         # Keyboard shortcuts
+        self.shortcut_new_temp_file = Event()
         self.shortcut_save = Event()
         self.shortcut_move_filebtn_left = Event()
         self.shortcut_previous_filebtn = Event()

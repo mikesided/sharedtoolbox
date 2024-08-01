@@ -9,6 +9,10 @@ QWidget {
     outline: 0;
 }
 
+QWidget[italic=true] {
+    font: italic;
+}
+
 QFrame#nav {
     background: @dark_1;
 }
@@ -39,9 +43,7 @@ QFrame#filebutton {
     background: @dark_2;
     border-radius: 0px;
     border: 1px solid @dark_3;
-    padding-right: 3px;/*
-    margin-top: 4px;
-    padding-bottom: 4px;*/
+    padding-right: 3px;
 }
 
 QFrame#filebutton[selected=true] {
@@ -117,12 +119,54 @@ QScrollBar::add-page, QScrollBar::sub-page {
     background: @dark_1;
 }
 
+QLineEdit {
+    background: @dark_2;
+    border: 1px solid @dark_1;
+    border-radius: 3px;
+}
+
 QLineEdit#searchbar {
     background: @dark_2;
     border: 1px solid @dark_1;
     border-radius: 3px;
     margin-right: 5px;
     margin-left: 5px;
+}
+
+QComboBox {
+    background: @dark_2;
+    border-radius: 5px;
+    border: 1px solid @dark_3;
+    padding-right: 8px;
+    padding-left: 4px;
+}
+
+QComboBox::drop-down {
+    image: url($downarrow);
+}
+
+QComboBox:hover, QComboBox:!editable:on, QComboBox::drop-down:editable:on {
+    border: 1px solid @primary_hover;
+}
+
+QListView {
+    show-decoration-selected: 1;
+    outline: 0;
+    border: 2px solid @dark_3;
+    background: @dark_2;
+}
+
+QListView::item {
+    background-color: transparent;
+    padding: 1px;
+    border: none;    
+    margin-left: 4px;
+}
+
+QListView::item:selected {
+    border-left: 4px inset @primary;
+    background-color: qlineargradient(spread:pad, x1:0 y1:0, x2:1 y2:0, stop:0 @primary_hover, stop:1 @primary_active);
+    margin-left: 0px;
 }
 
 QPushButton {

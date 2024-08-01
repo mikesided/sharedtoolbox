@@ -84,6 +84,8 @@ class CodeEditor(QPlainTextEdit):
         """
         if key == Qt.Key_S and modifiers == Qt.KeyboardModifier.ControlModifier:
             event_handler.shortcut_save.emit()
+        if key == Qt.Key_N and modifiers == Qt.KeyboardModifier.ControlModifier:
+            event_handler.shortcut_new_temp_file.emit()
         elif key == Qt.Key_Left and modifiers == Qt.KeyboardModifier.AltModifier:
             event_handler.shortcut_previous_filebtn.emit()
         elif key == Qt.Key_Right and modifiers == Qt.KeyboardModifier.AltModifier:

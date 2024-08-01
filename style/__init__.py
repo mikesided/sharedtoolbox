@@ -2,7 +2,7 @@ import os
 from os.path import dirname, join
 
 STYLE_PATH = dirname(os.path.abspath(__file__))
-RESRC_PATH = join(dirname(dirname(dirname(__file__))), 'resources')
+RESRC_PATH = join(dirname(dirname(__file__)), 'resources')
 IMG_PATH = join(RESRC_PATH, 'images')
 
 FONT = 'Exo'
@@ -21,6 +21,8 @@ STYLE = {
     'dark_1': '#211A1D',
     'dark_2': '#373233',
     'dark_3': '#4C4949',
+    'red': '#ba2c13',
+    'downarrow': 'downarrow.png'
 }
 
 def get_stylesheet():
@@ -32,7 +34,7 @@ def get_stylesheet():
         stylesheet = stream.read()
 
     for code, value in reversed(STYLE.items()):
-        file_path = os.path.join(IMG_PATH.replace('\\', '/'), value)
+        file_path = os.path.join(IMG_PATH, value).replace('\\', '/')
         stylesheet = stylesheet.replace('@{}'.format(code), value)
         stylesheet = stylesheet.replace('${}'.format(code), file_path)
 
