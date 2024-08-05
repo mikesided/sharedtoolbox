@@ -17,8 +17,9 @@ import qtawesome
 # Local Imports
 from sharedtoolbox import configs, style, event_handler
 from sharedtoolbox.widgets.base import *
+from sharedtoolbox.core import codeHandler
 from sharedtoolbox.dialogs import infoDialog
-from sharedtoolbox.widgets.editor import pythonEditor, filesWidget
+from sharedtoolbox.widgets.editor import pythonEditor, filesWidget, console
 
 # ______________________________________________________________________________________________________________________
 
@@ -32,14 +33,23 @@ class EditorWidget(QFrame):
         # Properties
 
         # Widgets
+        self.splitter = QSplitter(Qt.Vertical, childrenCollapsible=False)
+        self.splitter.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.editor_controls_wid = EditorControls(editor=self)
         self.files_wid = filesWidget.FilesWidget()
+        self.console_wid = console.ConsoleWidget()
 
         # Layout
         self.setLayout(QVBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
+        self.layout().setSpacing(0)
         self.layout().addWidget(self.editor_controls_wid)
-        self.layout().addWidget(self.files_wid)
+        self.layout().addWidget(self.splitter)
+        self.splitter.addWidget(self.files_wid)
+        self.splitter.addWidget(self.console_wid)
+
+        #self.splitter.setStretchFactor(0, 3)
+        #self.splitter.setStretchFactor(1, 1)
 
         # Connections
         event_handler.shortcut_new_temp_file.connect(self.new_temp_file)
@@ -49,6 +59,7 @@ class EditorWidget(QFrame):
 
     def reload(self):
         """Reload the widget"""
+        self.files_wid._exit_handler()
         self.files_wid.deleteLater()
         self.files_wid = filesWidget.FilesWidget()
         self.layout().addWidget(self.files_wid)
@@ -91,7 +102,7 @@ class EditorWidget(QFrame):
         Args:
             user_code (str): Code to run
         """
-        exec(user_code)
+        codeHandler.CodeHandler.run_code(user_code)
 
     def _exit_handler(self):
         """Triggered on app quit"""

@@ -1,8 +1,11 @@
 import os
 from sharedtoolbox import configs
-from sharedtoolbox.core import eventHandler
+from sharedtoolbox.core import eventHandler, stdHandler
 
 event_handler = eventHandler.EventHandler()
+std_out_handler = stdHandler.StdOutHandler(event_handler) 
+std_err_handler = stdHandler.StdErrHandler(event_handler) 
+
 configs.Prefs()
 
 # Temporary config

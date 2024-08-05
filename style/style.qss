@@ -27,6 +27,10 @@ QFrame#fileswidget {
     padding-top: 3px;
 }
 
+QFrame#consolewidget {
+    background: #050505;
+}
+
 QFrame#statuswidget {
     border: none;
     border-top: 1px solid @dark_2;
@@ -218,6 +222,30 @@ QPushButton#icon:disabled {
     background: transparent;
 }
 
+QPushButton#toggleable {
+    background: @dark_1;
+    border: 1px solid @dark_3;
+    color: @primary;
+}
+
+QPushButton#toggleable:hover {
+    background: @dark_2;
+    border: 1px solid @primary_hover;
+}
+
+QPushButton#toggleable:checked:hover {
+    background: @primary_active;
+    border: 1px solid @primary_hover;
+}
+
+QPushButton#toggleable:pressed, QPushButton#toggleable:checked:pressed {
+    background: @dark_3;
+}
+
+QPushButton#toggleable:checked {
+    background: @primary_hover;
+}
+
 QPushButton#box {
     background: transparent;
     border: 1px solid @dark_3;
@@ -266,6 +294,11 @@ QPlainTextEdit#codeeditor {
     background: transparent;
     border: none;
     border-top: 1px solid @dark_2;
+}
+
+QTextEdit#console {
+    background: #050505;
+    border: none;
 }
 
 QWidget#codeeditorlines {

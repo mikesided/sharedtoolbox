@@ -34,12 +34,14 @@ class Prefs:
     current_profile = None
     nav_widget_size = None
     editor_widget_size = None
+    console_widget_size = None
     main_window_size = None
 
     # Tool Prefs
     use_smart_editor = None
     editor_theme = None
     editor_font = None
+    console_toggled = None
 
     # Profile
     local_script_path = None
@@ -56,10 +58,12 @@ class Prefs:
         Prefs.main_window_size = data.get('main_window_size', (800, 600))
         Prefs.nav_widget_size = data.get('nav_widget_size', (200, 600))
         Prefs.editor_widget_size = data.get('editor_widget_size', (600, 600))
+        Prefs.console_widget_size = data.get('console_widget_size', (600, 100))
 
         Prefs.use_smart_editor = data.get('use_smart_editor', True)
         Prefs.editor_theme = data.get('editor_theme', 'native')
         Prefs.editor_font = data.get('editor_font', 'Consolas')
+        Prefs.console_toggled = data.get('console_toggled', True)
         
         self.load_profile(self.current_profile)
 

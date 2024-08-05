@@ -53,6 +53,20 @@ class ProfileDialog(QDialog):
         self.le_project_root_path = QLineEdit(placeholderText=os.environ.get(configs.PROJECT_ROOT_ENV_VAR) or '')
         self.btn_project_root_path = QPushButton(icon=browse_icon, objectName='icon')
         self.le_project_script_dir = QLineEdit(placeholderText=os.environ.get(configs.PROJECT_SCRIPT_LOCATION_ENV_VAR, configs.PROJECT_SCRIPT_LOCATION))
+        self.lw_env_vars = QListWidget()
+        self.lw_env_vars.setSortingEnabled(True)
+        self.lw_env_vars.addItems(['asdf', 'fdsa', 'asgsdfbfdnbfd'])
+        self.btn_add_env_var = QPushButton(objectName='icon', icon=qtawesome.icon('fa.plus', color=style.STYLE.get('primary')))
+        self.btn_del_env_var = QPushButton(objectName='icon', icon=qtawesome.icon('fa.trash', color=style.STYLE.get('red')))
+        self.lw_env_var_value = QListWidget()
+        self.lw_env_var_value.setDragDropMode(QAbstractItemView.DragDrop)
+        self.lw_env_var_value.setDefaultDropAction(Qt.MoveAction)
+        self.lw_env_var_value.addItems(['afasfasdf', 'fbfddfdsa', 'asgsA`1Qdfbfdnbfd'])
+        for index in range(self.lw_env_var_value.count()):
+            item = self.lw_env_var_value.item(index)
+            item.setFlags(item.flags() | Qt.ItemIsEditable)
+        self.btn_add_var_value = QPushButton(objectName='icon', icon=qtawesome.icon('fa.plus', color=style.STYLE.get('primary')))
+        self.btn_del_var_value = QPushButton(objectName='icon', icon=qtawesome.icon('fa.trash', color=style.STYLE.get('red')))
         self.btn_clear_pinned_files = QPushButton(text='Clear all pinned files')
 
         # Layout
@@ -138,10 +152,26 @@ class ProfileDialog(QDialog):
         self.grid_layout.addWidget(QLabel(text='   Run environment', objectName='title', fixedHeight=35), row, 0, 1, 2)
     
         row = self.grid_layout.rowCount() + 1
-        self.grid_layout.addWidget(QLabel(text='Environment Variables    '), row, 0)
+        self.grid_layout.addWidget(QLabel(text='Environment Variables    ', alignment=Qt.AlignTop), row, 0)
+        self.grid_layout.addWidget(self.lw_env_vars, row, 1)
+        _v_layout = QVBoxLayout()
+        _v_layout.setContentsMargins(0, 0, 0, 0)
+        _v_layout.setSpacing(4)
+        _v_layout.addWidget(self.btn_add_env_var)
+        _v_layout.addWidget(self.btn_del_env_var)
+        _v_layout.addItem(VSpacer())
+        self.grid_layout.addLayout(_v_layout, row, 2)
 
         row = self.grid_layout.rowCount() + 1
-        self.grid_layout.addWidget(QLabel(text='Variable Values    '), row, 0)
+        self.grid_layout.addWidget(QLabel(text='Variable Values    ', alignment=Qt.AlignTop), row, 0)
+        self.grid_layout.addWidget(self.lw_env_var_value, row, 1)
+        _v_layout = QVBoxLayout()
+        _v_layout.setContentsMargins(0, 0, 0, 0)
+        _v_layout.setSpacing(4)
+        _v_layout.addWidget(self.btn_add_var_value)
+        _v_layout.addWidget(self.btn_del_var_value)
+        _v_layout.addItem(VSpacer())
+        self.grid_layout.addLayout(_v_layout, row, 2)
 
         # Options
         row = self.grid_layout.rowCount() + 1

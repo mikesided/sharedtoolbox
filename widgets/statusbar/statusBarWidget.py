@@ -40,6 +40,9 @@ class StatusBarWidget(QFrame):
         self.cb_editor_theme = QComboBoxNoWheel(toolTip='Editor theme')
         self.cb_editor_theme.setFixedWidth(100)
         self.cb_editor_theme.view().setFixedWidth(150)
+        self.btn_toggle_console = QPushButton(objectName='toggleable', fixedSize=QSize(20, 20), toolTip='Toggle Console',
+                                              icon=qtawesome.icon('mdi.console-line', color='#ffffff'))
+        self.btn_toggle_console.setCheckable(True)
 
         # Layout
         self.setLayout(QHBoxLayout())
@@ -53,6 +56,7 @@ class StatusBarWidget(QFrame):
         self.layout().addWidget(self.lbl_interpreter)
         self.layout().addWidget(self.cb_editor_font)
         self.layout().addWidget(self.cb_editor_theme)
+        self.layout().addWidget(self.btn_toggle_console)
 
         # Init tool
         self.init()
@@ -60,6 +64,8 @@ class StatusBarWidget(QFrame):
         # Connections
         self.cb_editor_font.currentTextChanged.connect(self._on_cb_editor_font_currentTextChanged)
         self.cb_editor_theme.currentTextChanged.connect(self._on_cb_editor_theme_currentTextChanged)
+        self.btn_toggle_console.toggled.connect(event_handler.console_toggled.emit)
+        self.btn_toggle_console.toggled.connect(partial(setattr, configs.Prefs, 'console_toggled'))
         event_handler.file_opened.connect(self._on_current_file_changed)
         event_handler.file_state_changed.connect(self._on_file_state_changed)
 
@@ -85,6 +91,9 @@ class StatusBarWidget(QFrame):
             self.cb_editor_theme.addItem(theme)
         self.cb_editor_theme.setCurrentIndex(0)
         self.cb_editor_theme.setCurrentText(configs.Prefs.editor_theme)
+
+        # Console
+        self.btn_toggle_console.setChecked(configs.Prefs.console_toggled)
 
     def _on_current_file_changed(self, file):
         """Triggered when the opened file has changed
@@ -117,10 +126,10 @@ class StatusBarWidget(QFrame):
         configs.Prefs.editor_theme = text
         event_handler.theme_changed.emit(text)
 
-
     def _exit_handler(self):
         """Triggered on app quit"""
         configs.Prefs.set_pref_data('editor_theme', self.cb_editor_theme.currentText())
         configs.Prefs.set_pref_data('editor_font', self.cb_editor_font.currentText())
+        configs.Prefs.set_pref_data('console_toggled', self.btn_toggle_console.isChecked())
 
 # ______________________________________________________________________________________________________________________

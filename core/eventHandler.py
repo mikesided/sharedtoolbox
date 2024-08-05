@@ -30,6 +30,10 @@ class EventHandler(object, metaclass=Singleton):
         Args:
             singleton (bool): Construct as a singleton? Defaults to False
         """
+        self.std_out_write = Event(str)
+        self.std_err_write = Event(str)
+        self.console_write_html = Event(str)
+
         self.file_clicked = Event(str) # File path. Triggered from the navigation
         self.file_opened = Event(str) # File path. Triggered from the FilesWidget. This is the current editor displayed
         self.file_state_changed = Event(bool) # True: Saved. False: Unsaved.  Only the current file emits this signal.
@@ -41,6 +45,7 @@ class EventHandler(object, metaclass=Singleton):
         self.theme_changed = Event(str) # Theme.
         self.font_changed = Event(str) # Font.
         self.profile_changed = Event(str) # New profile name.
+        self.console_toggled = Event(bool) # Shown?
         
         # Keyboard shortcuts
         self.shortcut_new_temp_file = Event()
@@ -118,4 +123,3 @@ class Event():
                          )
 
 # ______________________________________________________________________________________________________________________
-# __init__.py
