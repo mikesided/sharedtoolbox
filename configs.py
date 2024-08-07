@@ -48,6 +48,7 @@ class Prefs:
     shared_script_path = None
     project_root_path = None
     project_script_location = None
+    env_vars = None
     
     def __init__(self):
         self._bootstrap_configs()
@@ -87,11 +88,12 @@ class Prefs:
         cls.shared_script_path = profile_data.get('shared_script_path')
         cls.project_root_path = profile_data.get('project_root_path')
         cls.project_script_location = profile_data.get('project_script_location')
+        cls.env_vars = profile_data.get('env')
 
     @classmethod
     def new_profile(cls, profile_name):
         data = cls.read_prefs_data()
-        data['profiles'].setdefault(profile_name, {})
+        data['profiles'].setdefault(profile_name, {'env': {'PYTHONPATH': ['{{{ENVIRONMENT}}}']}})
         cls.set_pref_data('profiles', data.get('profiles'))
         Prefs.profiles = list(data.get('profiles').keys())
         

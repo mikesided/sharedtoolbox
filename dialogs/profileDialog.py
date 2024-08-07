@@ -23,6 +23,7 @@ from sharedtoolbox.dialogs import infoDialog
 
 # ______________________________________________________________________________________________________________________
 
+DEF_ENV_VAR = '-- Active Environment Value --'
 
 class ProfileDialog(QDialog):
     """
@@ -37,6 +38,9 @@ class ProfileDialog(QDialog):
         self.setWindowTitle('Profiles')
         self.setMinimumSize(QSize(500, 400))
         self.setStyleSheet(style.get_stylesheet())
+
+        # Properties
+        self._env_var = None
 
         # Widgets
         self.btn_new_profile = QPushButton(objectName='icon', text='New', icon=qtawesome.icon('fa.plus', color=style.STYLE.get('primary')))
@@ -66,6 +70,7 @@ class ProfileDialog(QDialog):
             item = self.lw_env_var_value.item(index)
             item.setFlags(item.flags() | Qt.ItemIsEditable)
         self.btn_add_var_value = QPushButton(objectName='icon', icon=qtawesome.icon('fa.plus', color=style.STYLE.get('primary')))
+        self.btn_add_default_var_value = QPushButton(objectName='icon', toolTip="Add this variable's value from the active environment", icon=qtawesome.icon('fa5s.flag', color=style.STYLE.get('primary')))
         self.btn_del_var_value = QPushButton(objectName='icon', icon=qtawesome.icon('fa.trash', color=style.STYLE.get('red')))
         self.btn_clear_pinned_files = QPushButton(text='Clear all pinned files')
 
@@ -122,6 +127,19 @@ class ProfileDialog(QDialog):
         self.btn_shared_script_path.clicked.connect(self._on_btn_shared_script_path_clicked)
         self.btn_project_root_path.clicked.connect(self._on_btn_project_root_path_clicked)
         self.btn_clear_pinned_files.clicked.connect(self._on_btn_clear_pinned_files_clicked)
+        self.lw_env_vars.currentItemChanged.connect(self._on_lw_env_vars_itemClicked)
+        self.btn_add_env_var.clicked.connect(self._on_btn_add_env_var_clicked)
+        self.btn_del_env_var.clicked.connect(self._on_btn_del_env_var_clicked)
+        self.btn_add_var_value.clicked.connect(self._on_btn_add_var_value_clicked)
+        self.btn_add_default_var_value.clicked.connect(self._on_btn_add_default_var_clicked)
+        self.btn_del_var_value.clicked.connect(self._on_btn_del_var_value_clicked)
+
+    @property
+    def selected_env_var(self):
+        if self.lw_env_vars.selectedItems():
+            return self.lw_env_vars.selectedItems()[0].text()
+        else:
+            return None
 
     def load_grid_layout(self):        
         # Script paths
@@ -169,6 +187,7 @@ class ProfileDialog(QDialog):
         _v_layout.setContentsMargins(0, 0, 0, 0)
         _v_layout.setSpacing(4)
         _v_layout.addWidget(self.btn_add_var_value)
+        _v_layout.addWidget(self.btn_add_default_var_value)
         _v_layout.addWidget(self.btn_del_var_value)
         _v_layout.addItem(VSpacer())
         self.grid_layout.addLayout(_v_layout, row, 2)
@@ -186,6 +205,14 @@ class ProfileDialog(QDialog):
         self.le_shared_script_path.setText(configs.Prefs.shared_script_path)
         self.le_project_root_path.setText(configs.Prefs.project_root_path)
         self.le_project_script_dir.setText(configs.Prefs.project_script_location)
+
+        self.lw_env_vars.blockSignals(True)
+        self.lw_env_vars.clear()
+        self.lw_env_vars.addItems(configs.Prefs.env_vars.keys())
+        self.lw_env_vars.blockSignals(False)
+
+        self._env_var = None
+        self.lw_env_var_value.clear()
 
     def reload_cb_profile(self, profile=None):
         """Reloads cb_profile
@@ -231,6 +258,7 @@ class ProfileDialog(QDialog):
                 return
             configs.Prefs.new_profile(profile_name=text)
             self.reload_cb_profile(profile=text)
+            self._save_profile()
 
     def _on_btn_rename_profile_clicked(self):
         current_profile = self.cb_profile.currentText()
@@ -283,6 +311,110 @@ class ProfileDialog(QDialog):
         if confirm:
             configs.Prefs.set_pref_profile_data('pinned_files', [])
 
+    def _on_btn_add_env_var_clicked(self):
+        """Adds a new environment variable"""
+        text, confirmed = QInputDialog.getText(self, 'Run Environment', "Enter the new variable's name")
+        if confirmed:
+            if self.lw_env_vars.findItems(text, Qt.MatchExactly):
+                infoDialog.InfoDialog(text='Variable "{}" already exists'.format(text), info_level=3).exec_()
+            else:
+                item = QListWidgetItem(text)
+                self.lw_env_vars.addItem(item)
+                self.lw_env_vars.setCurrentItem(item)
+
+    def _on_btn_del_env_var_clicked(self):
+        """Deletes the selected env var"""    
+        profile_data = configs.Prefs.read_prefs_profile_data()
+        env_data = profile_data.get('env') or {}
+        try:
+            del(env_data[self.selected_env_var])
+        except KeyError:
+            pass
+        configs.Prefs.set_pref_profile_data('env', env_data)
+        configs.Prefs.env_vars = env_data
+
+        self.lw_env_vars.blockSignals(True)
+        if self.lw_env_vars.selectedItems():
+            self.lw_env_vars.takeItem(self.lw_env_vars.currentRow())
+            self.lw_env_vars.setCurrentItem(None)
+            
+        self.lw_env_vars.blockSignals(False)
+        self.lw_env_var_value.clear()
+        self._env_var = None
+                
+    def _on_btn_add_var_value_clicked(self):
+        """Adds a new environment variable value"""
+        item = QListWidgetItem('')
+        item.setFlags(item.flags() | Qt.ItemIsEditable)
+        self.lw_env_var_value.addItem(item)
+        self.lw_env_var_value.setCurrentItem(item)
+        self.lw_env_var_value.editItem(item)
+
+    def _on_btn_add_default_var_clicked(self):
+        """Adds the default env var value"""
+        if self.lw_env_var_value.findItems(DEF_ENV_VAR, Qt.MatchExactly):
+            self.lw_env_var_value.setCurrentItem(self.lw_env_var_value.findItems(DEF_ENV_VAR, Qt.MatchExactly)[0])
+            infoDialog.InfoDialog(text='Default active value already present', info_level=3).exec_()
+        else:
+            item = QListWidgetItem(DEF_ENV_VAR)
+            self.lw_env_var_value.addItem(item)
+            self.lw_env_var_value.setCurrentItem(item)
+
+    def _on_btn_del_var_value_clicked(self):
+        """Deletes the current environment value selected"""
+        if self.lw_env_var_value.selectedItems():
+            self.lw_env_var_value.takeItem(self.lw_env_var_value.currentRow())
+            
+            if self.lw_env_var_value.selectedItems():
+                self.lw_env_var_value.setCurrentItem(None)
+        
+        self._save_env_var()
+
+    def _on_lw_env_vars_itemClicked(self, item=None):
+        """
+        Triggered when the user selects an environment variable
+        Save the previous env var value and load the new the value list widget
+        """
+        if item:
+            env_var = item.text()
+        else:
+            env_var = None
+
+        if self._env_var:
+            self._save_env_var(self._env_var)
+            self.lw_env_var_value.clear()
+        if env_var:
+            for value in configs.Prefs.env_vars.get(env_var, ['{{{ENVIRONMENT}}}']):
+                item = QListWidgetItem(value)
+                if value == '{{{ENVIRONMENT}}}':
+                    item.setText(DEF_ENV_VAR)
+                else:
+                    item.setFlags(item.flags() | Qt.ItemIsEditable)
+                self.lw_env_var_value.addItem(item)
+
+        self._env_var = env_var
+
+    def _save_env_var(self, env_var=None):
+        """Saves the current environment variable from the current list widget data
+        
+        Args:
+            env_var (str): Environment variable to save
+        """
+        if not env_var:
+            env_var = self.selected_env_var
+        values = []
+        for i in range(self.lw_env_var_value.count()):
+            value = self.lw_env_var_value.item(i).text()
+            if value == DEF_ENV_VAR:
+                value = '{{{ENVIRONMENT}}}'
+            values.append(value)
+
+        profile_data = configs.Prefs.read_prefs_profile_data()
+        env_data = profile_data.get('env') or {}
+        env_data[env_var] = values
+        configs.Prefs.set_pref_profile_data('env', env_data)
+        configs.Prefs.env_vars = env_data
+    
     def _save_profile(self):
         """Saves the current profile"""
         le = self.le_local_script_path
@@ -296,6 +428,9 @@ class ProfileDialog(QDialog):
         
         le = self.le_project_script_dir
         configs.Prefs.set_pref_profile_data('project_script_location', le.text())
+
+        if self.selected_env_var:
+            self._save_env_var()
 
         configs.Prefs.load_profile(self.cb_profile.currentText())
 

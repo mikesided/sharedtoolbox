@@ -62,7 +62,7 @@ class EditorWidget(QFrame):
         self.files_wid._exit_handler()
         self.files_wid.deleteLater()
         self.files_wid = filesWidget.FilesWidget()
-        self.layout().addWidget(self.files_wid)
+        self.splitter.insertWidget(0, self.files_wid)
 
     def new_temp_file(self):
         """Creates a new temp file"""
