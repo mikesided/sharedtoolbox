@@ -164,11 +164,11 @@ QListView::item {
     background-color: transparent;
     padding: 1px;
     border: none;    
-    margin-left: 4px;
+    margin-left: 2px;
 }
 
 QListView::item:selected {
-    border-left: 4px inset @primary;
+    border-left: 2px inset @primary;
     background-color: qlineargradient(spread:pad, x1:0 y1:0, x2:1 y2:0, stop:0 @primary_hover, stop:1 @primary_active);
     margin-left: 0px;
 }
@@ -180,6 +180,27 @@ QPushButton {
     padding-left: 3px;
     padding-right: 3px;
     min-height: 18px;
+}
+
+QMenu {
+    background: @dark_2;
+    border: 1px solid @dark_3;
+}
+
+QMenu::item {
+    background: transparent;
+    padding: 1px;
+    border: none;    
+    margin-left: 2px;
+    min-height: 20px;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+QMenu::item:selected {
+    border-left: 2px inset @primary;
+    background-color: qlineargradient(spread:pad, x1:0 y1:0, x2:1 y2:0, stop:0 @primary_hover, stop:1 @primary_active);
+    margin-left: 0px;
 }
 
 QPushButton:hover {
@@ -263,6 +284,11 @@ QPushButton#box:pressed {
 QPushButton#box:disabled {
     background: @dark_2;
     border: 1px solid @black_disabled;
+}
+
+QPushButton::menu-indicator {
+    image: none;
+    width: 0px;
 }
 
 QTreeView {

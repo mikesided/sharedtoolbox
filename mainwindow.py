@@ -19,6 +19,7 @@ from sharedtoolbox.widgets import mainwidget
 def launch():
     """Launch the SharedToolbox"""
     app = QApplication(sys.argv)
+    app.setStyle('Fusion')
     app.setFont(QFont(style.FONT))
     window = MainWindow()
     window.show()

@@ -21,16 +21,6 @@ from sharedtoolbox.widgets.editor import pythonEditor, filesWidget
 
 # ______________________________________________________________________________________________________________________
 
-class ColoredConsole():
-    """Colors the console, and adds a heading and trailing <br>"""
-    def __init__(self, color):
-        self.color = color
-
-    def __enter__(self, *args):
-        event_handler.console_write_html.emit('<span style="color: {};"><br>'.format(self.color))
-
-    def __exit__(self, *args):
-        event_handler.console_write_html.emit('</span>')
 
 class ConsoleWidget(QFrame):
     

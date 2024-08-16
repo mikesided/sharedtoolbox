@@ -49,6 +49,7 @@ class ProfileDialog(QDialog):
         self.cb_profile = QComboBoxNoWheel()
         self.cb_profile.addItems(sorted(configs.Prefs.profiles))
         self.cb_profile.setCurrentText(configs.Prefs.current_profile)
+        self.btn_options = QPushButton(objectName='icon', icon=qtawesome.icon('mdi.dots-horizontal', scale_factor=1.25, color=style.STYLE.get('primary')))
         browse_icon = qtawesome.icon('mdi.folder-edit', color=style.STYLE.get('primary'))
         self.le_local_script_path = QLineEdit(placeholderText=os.environ.get(configs.LOCAL_SCRIPT_ENV_VAR, configs.LOCAL_SCRIPT_PATH))
         self.btn_local_script_path = QPushButton(icon=browse_icon, objectName='icon')
@@ -72,12 +73,11 @@ class ProfileDialog(QDialog):
         self.btn_add_var_value = QPushButton(objectName='icon', icon=qtawesome.icon('fa.plus', color=style.STYLE.get('primary')))
         self.btn_add_default_var_value = QPushButton(objectName='icon', toolTip="Add this variable's value from the active environment", icon=qtawesome.icon('fa5s.flag', color=style.STYLE.get('primary')))
         self.btn_del_var_value = QPushButton(objectName='icon', icon=qtawesome.icon('fa.trash', color=style.STYLE.get('red')))
-        self.btn_clear_pinned_files = QPushButton(text='Clear all pinned files')
 
         # Layout
         self.setLayout(QVBoxLayout())
         self.layout().setContentsMargins(10, 10, 10, 10)
-        self.layout().setSpacing(10)
+        self.layout().setSpacing(8)
         self.header_layout = QHBoxLayout()
         self.header_layout.setContentsMargins(0, 0, 0, 0)
         self.header_layout.setSpacing(4)
@@ -102,6 +102,8 @@ class ProfileDialog(QDialog):
         self.header_layout.addWidget(self.btn_new_profile)
         self.header_layout.addWidget(self.btn_rename_profile)
         self.header_layout.addWidget(self.btn_delete_profile)
+        self.header_layout.addWidget(VLine())
+        self.header_layout.addWidget(self.btn_options)
 
         # Set Grid Layout        
         self.load_grid_layout()
@@ -115,6 +117,12 @@ class ProfileDialog(QDialog):
         self.footer_layout.addItem(HSpacer())
         self.footer_layout.addWidget(self.btn_accept)
 
+        # Options menu
+        self.menu_options = QMenu(parent=self)
+        self.menu_options.addSection('Options')
+        self.menu_options.addAction('Clear all pinned files', self._clear_pinned_files)
+        self.btn_options.setMenu(self.menu_options)
+
         # Init
         self.load_profile()
 
@@ -126,7 +134,6 @@ class ProfileDialog(QDialog):
         self.btn_local_script_path.clicked.connect(self._on_btn_local_script_path_clicked)
         self.btn_shared_script_path.clicked.connect(self._on_btn_shared_script_path_clicked)
         self.btn_project_root_path.clicked.connect(self._on_btn_project_root_path_clicked)
-        self.btn_clear_pinned_files.clicked.connect(self._on_btn_clear_pinned_files_clicked)
         self.lw_env_vars.currentItemChanged.connect(self._on_lw_env_vars_itemClicked)
         self.btn_add_env_var.clicked.connect(self._on_btn_add_env_var_clicked)
         self.btn_del_env_var.clicked.connect(self._on_btn_del_env_var_clicked)
@@ -191,13 +198,6 @@ class ProfileDialog(QDialog):
         _v_layout.addWidget(self.btn_del_var_value)
         _v_layout.addItem(VSpacer())
         self.grid_layout.addLayout(_v_layout, row, 2)
-
-        # Options
-        row = self.grid_layout.rowCount() + 1
-        self.grid_layout.addWidget(QLabel(text='   Options', objectName='title', fixedHeight=35), row, 0, 1, 2)
-        
-        row = self.grid_layout.rowCount() + 1
-        self.grid_layout.addWidget(self.btn_clear_pinned_files, row, 0)
 
     def load_profile(self):
         """Loads the current profile in the widget"""
@@ -302,7 +302,7 @@ class ProfileDialog(QDialog):
         if dir:
             self.le_project_root_path.setText(os.path.normpath(dir))
 
-    def _on_btn_clear_pinned_files_clicked(self):
+    def _clear_pinned_files(self):
         confirm = infoDialog.InfoDialog(
             text='Do you want to clear all pinned files for the current profile?',
             desc='\n'.join(configs.Prefs.get_pinned_files()),
@@ -344,6 +344,9 @@ class ProfileDialog(QDialog):
                 
     def _on_btn_add_var_value_clicked(self):
         """Adds a new environment variable value"""
+        if not self.selected_env_var:
+            infoDialog.InfoDialog(text='Select an environment variable first').exec_()
+            return
         item = QListWidgetItem('')
         item.setFlags(item.flags() | Qt.ItemIsEditable)
         self.lw_env_var_value.addItem(item)
@@ -352,6 +355,9 @@ class ProfileDialog(QDialog):
 
     def _on_btn_add_default_var_clicked(self):
         """Adds the default env var value"""
+        if not self.selected_env_var:
+            infoDialog.InfoDialog(text='Select an environment variable first').exec_()
+            return
         if self.lw_env_var_value.findItems(DEF_ENV_VAR, Qt.MatchExactly):
             self.lw_env_var_value.setCurrentItem(self.lw_env_var_value.findItems(DEF_ENV_VAR, Qt.MatchExactly)[0])
             infoDialog.InfoDialog(text='Default active value already present', info_level=3).exec_()
