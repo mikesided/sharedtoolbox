@@ -45,6 +45,7 @@ class CodeEditor(QPlainTextEdit):
         self.setObjectName('codeeditor')
         self.lineNumberArea = LineNumberArea(self)
         self._set_theme()
+        self.is_selected = False
 
         self.connect(self, SIGNAL('updateRequest(QRect,int)'), self.updateLineNumberArea)
         self.connect(self, SIGNAL('cursorPositionChanged()'), self.highlightCurrentLine)
@@ -61,6 +62,7 @@ class CodeEditor(QPlainTextEdit):
         
     def eventFilter(self, obj, event, *args):
         """Event Filter"""
+        # Only catch current active editor
         if event.type() == QEvent.KeyPress:
             key = event.key()
             modifiers = event.modifiers()
@@ -169,8 +171,12 @@ class CodeEditor(QPlainTextEdit):
         
         Args:
             text_cursor (QTextCursor): Provide if altered with, optional
+
+        Returns:
+            int: Number of chars deleted
         """
         text_cursor = text_cursor or self.textCursor()
+        removed_chars = 0
         with EditBlock(text_cursor):
             current_text = text_cursor.block().text()
             leading_spaces = (len(current_text) - len(current_text.lstrip(' ')))
@@ -179,22 +185,34 @@ class CodeEditor(QPlainTextEdit):
             for i in range((leading_spaces % 4) or 4):
                 if text_cursor.block().text() != '':
                     text_cursor.deletePreviousChar()
+                    removed_chars += 1
+
+        return removed_chars
                     
     def _indent(self, text_cursor=None):
         """Indent the text
         
         Args:
             text_cursor (QTextCursor): Provide if altered with, optional
+            
+        Returns:
+            int: Number of chars added
         """
         text_cursor = text_cursor or self.textCursor()
+        added_chars = 0
         with EditBlock(text_cursor):
             current_text = text_cursor.block().text()
             leading_spaces = (len(current_text) - len(current_text.lstrip(' ')))
             for i in range(4 - (leading_spaces % 4)):
                 text_cursor.insertText(' ')
+                added_chars += 1
+
+        return added_chars
 
     def _indent_selection(self):
         """Indent the selected lines (or indent from cursor position)"""
+        if not self.is_selected:
+            return
         text_cursor = self.textCursor()
         end_pos = text_cursor.selectionEnd()
         with EditBlock(text_cursor):
@@ -205,17 +223,23 @@ class CodeEditor(QPlainTextEdit):
                 while text_cursor.position() <= end_pos:
                     self._indent(text_cursor=text_cursor)
                     _block = text_cursor.blockNumber()
+                    if _block + 1 == self.blockCount():
+                        break
                     while text_cursor.blockNumber() == _block:
                         text_cursor.setPosition(text_cursor.position() + 1)
             else:
                 # Indent if we are at the beginning of the block, else simply add 4 lines at the current position
                 if text_cursor.atBlockStart():
-                    self._indent()
+                    added_chars = self._indent()
+                    if added_chars:
+                        end_pos += added_chars
                 else:
                     text_cursor.insertText(' ' * 4)
         
     def _unindent_selection(self):
         """Unindent the selected lines (or the current line)"""
+        if not self.is_selected:
+            return
         text_cursor = self.textCursor()
         end_pos = text_cursor.selectionEnd()
         with EditBlock(text_cursor):
@@ -227,7 +251,11 @@ class CodeEditor(QPlainTextEdit):
                 if not block_text.strip() == '':
                     while block_text[text_cursor.positionInBlock()] == ' ':
                         text_cursor.setPosition(text_cursor.position() + 1)
-                    self._unindent(text_cursor=text_cursor)
+                    removed_chars = self._unindent(text_cursor=text_cursor)
+                    if removed_chars:
+                        end_pos -= removed_chars
+                if _block + 1 == self.blockCount():
+                    break
                 while text_cursor.blockNumber() == _block:
                     text_cursor.setPosition(text_cursor.position() + 1)
 

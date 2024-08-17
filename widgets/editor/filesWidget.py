@@ -278,6 +278,7 @@ class FileButton(QFrame):
         self._selected = selected
         self.setProperty('selected', selected)
         self.setStyleSheet(self.styleSheet())
+        self.editor.is_selected = selected
 
     @property
     def pinned(self):
