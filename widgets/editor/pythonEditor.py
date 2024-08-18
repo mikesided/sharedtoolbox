@@ -55,6 +55,8 @@ class CodeEditor(QPlainTextEdit):
         self.installEventFilter(self)
 
         # Connections
+        # Be mindful of checking if the current editor is currently selected/focus with self.is_selected
+        # Because by default, all active editors are listening to events.
         event_handler.shortcut_indent.connect(self._indent_selection)
         event_handler.shortcut_unindent.connect(self._unindent_selection)
         event_handler.theme_changed.connect(self._set_theme)
@@ -110,15 +112,20 @@ class CodeEditor(QPlainTextEdit):
             else:
                 event_handler.shortcut_run_all.emit()
         elif key == Qt.Key_Return and modifiers:
-            # Ignire modifier+enter
+            # Ignore modifier+enter
             pass
         else:
             return False
         return True
     
     def _handle_smart_editor(self, event, key, modifiers):
-        """Smart editor functionality"""
+        """Smart editor functionality
+        
+        Returns:
+            bool|None: Returns True if the event should be consumed, else sent to super()
+        """
         text_cursor = self.textCursor()
+        start_pos = text_cursor.position()
         if key in [Qt.Key_Return, Qt.Key_Enter]:
             # Handle new lines
             with EditBlock(self.textCursor()):
@@ -142,12 +149,58 @@ class CodeEditor(QPlainTextEdit):
                 if to_prev_line and current_text.strip() == '':
                     for i in range(len(current_text)):
                         text_cursor.deletePreviousChar()
-                
             return True
-    
+        elif key in [Qt.Key_Apostrophe, Qt.Key_QuoteDbl]:
+            # Add twice, keep cursor in the middle, unless next character is the same, then only move forward
+            with EditBlock(text_cursor):
+                if self.document().characterAt(start_pos) != self._get_key(key):
+                    text_cursor.insertText(self._get_key(key)*2)
+                text_cursor.setPosition(start_pos + 1)
+                self.setTextCursor(text_cursor)
+            return True
+        elif key in [Qt.Key_BracketLeft, Qt.Key_ParenLeft, Qt.Key_BraceLeft]:
+            # Add twice, keep cursor in the middle, unless next character is the same, then only move forward
+            with EditBlock(text_cursor):
+                text_cursor.insertText(self._get_key(key) + self._get_key(key, opposite=True))
+                text_cursor.setPosition(start_pos + 1)
+                self.setTextCursor(text_cursor)
+            return True        
+        elif key in [Qt.Key_BracketRight, Qt.Key_ParenRight, Qt.Key_BraceRight]:
+            # Add twice, keep cursor in the middle, unless next character is the same, then only move forward
+            with EditBlock(text_cursor):
+                if self.document().characterAt(start_pos) != self._get_key(key):
+                    text_cursor.insertText(self._get_key(key))
+                text_cursor.setPosition(start_pos + 1)
+                self.setTextCursor(text_cursor)
+            return True     
+
+    @staticmethod 
+    def _get_key(key, opposite=False):
+        """Returns the actual key for the given Qt.Key_??
+        
+        Returns:
+            str: Mapped key
+        """
+        if key == Qt.Key_Apostrophe:
+            return "'"
+        elif key == Qt.Key_QuoteDbl:
+            return '"'
+        elif key == Qt.Key_BracketLeft:
+            return ']' if opposite else '[' 
+        elif key == Qt.Key_ParenLeft:
+            return ')' if opposite else '(' 
+        elif key == Qt.Key_BraceLeft:
+            return '}' if opposite else '{' 
+        elif key == Qt.Key_BracketRight:
+            return '[' if opposite else ']' 
+        elif key == Qt.Key_ParenRight:
+            return '(' if opposite else ')' 
+        elif key == Qt.Key_BraceRight:
+            return '{' if opposite else '}' 
     
     def _set_new_line_indentation(self):
-        """Handles a new line to set the indentation"""
+        """Handles a new line to set the indentation
+        """
         text_cursor = self.textCursor()
         text_cursor.movePosition(QTextCursor.PreviousBlock)
         previous_line = text_cursor.block().text()
