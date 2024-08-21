@@ -153,7 +153,12 @@ class CodeEditor(QPlainTextEdit):
         elif key in [Qt.Key_Apostrophe, Qt.Key_QuoteDbl]:
             # Add twice, keep cursor in the middle, unless next character is the same, then only move forward
             with EditBlock(text_cursor):
-                if self.document().characterAt(start_pos) != self._get_key(key):
+                if start_pos > 1 and self.document().characterAt(start_pos-1) == self._get_key(key)\
+                and self.document().characterAt(start_pos-2) == self._get_key(key):
+                    # Only add once if the previous 2 characters are already quotes
+                    text_cursor.insertText(self._get_key(key))
+                elif self.document().characterAt(start_pos) != self._get_key(key):
+                    # Add twice
                     text_cursor.insertText(self._get_key(key)*2)
                 text_cursor.setPosition(start_pos + 1)
                 self.setTextCursor(text_cursor)
@@ -274,7 +279,9 @@ class CodeEditor(QPlainTextEdit):
                 text_cursor.setPosition(text_cursor.selectionStart())
                 text_cursor.setPosition(text_cursor.position() - text_cursor.positionInBlock())
                 while text_cursor.position() <= end_pos:
-                    self._indent(text_cursor=text_cursor)
+                    added_chars = self._indent(text_cursor=text_cursor)
+                    if added_chars:
+                        end_pos += added_chars
                     _block = text_cursor.blockNumber()
                     if _block + 1 == self.blockCount():
                         break
@@ -316,19 +323,22 @@ class CodeEditor(QPlainTextEdit):
         """Apply a new theme"""
         self._highlighter = CodeSyntaxHighlight(self.document(), 'python', configs.Prefs.editor_theme)
 
-        # Set font
-        for k, v in self._highlighter.formatter._style.items():
-            if hasattr(v, "setFontFamilies"):
-                v.setFontFamilies([configs.Prefs.editor_font])
-            else:
-                v.setFontFamily(configs.Prefs.editor_font)
-
-        # Additional background colors, not used
+        # Additional colors
         background_color = self._highlighter.formatter.style.background_color
         highlight_color = self._highlighter.formatter.style.highlight_color
         line_number_color = self._highlighter.formatter.style.line_number_color
-        #self.setStyleSheet('background-color: {};'.format(highlight_color))
-    
+        #self.setStyleSheet('background-color: {};'.format(background_color))
+        
+        for k, v in self._highlighter.formatter._style.items():
+            # Remove background colors from the formatter
+            v.setBackground(QColor('transparent'))
+
+            # Set font
+            if hasattr(v, 'setFontFamilies'):
+                v.setFontFamilies([configs.Prefs.editor_font])
+            else:
+                v.setFontFamily(configs.Prefs.editor_font)
+                        
 
     def updateLineNumberArea(self, rect, dy):
 

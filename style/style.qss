@@ -320,11 +320,16 @@ QPlainTextEdit#codeeditor {
     background: transparent;
     border: none;
     border-top: 1px solid @dark_2;
+    selection-color: @black;
+    selection-background-color: #157199;
 }
 
 QTextEdit#console {
     background: #050505;
     border: none;
+    selection-color: @black;
+    selection-background-color: #157199;
+}
 }
 
 QWidget#codeeditorlines {

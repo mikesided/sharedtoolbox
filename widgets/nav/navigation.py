@@ -23,6 +23,7 @@ class NavigationWidget(QFrame):
         self.resize(*configs.Prefs.nav_widget_size)
 
         # Properties
+        self._item_cache = {}
 
         # Widgets
         self.nav_tree = QTreeView()
@@ -86,6 +87,7 @@ class NavigationWidget(QFrame):
 
     def reload(self):
         """Reload tool"""
+        self._item_cache = {}
         self._set_new_model()
         self._load_scripts()
 
@@ -187,6 +189,8 @@ class NavigationWidget(QFrame):
                             itemN = ScriptItem(file_path, file[0:-3])
                             _item_cache.get(root).appendRow(itemN)
 
+        self._item_cache = _item_cache
+
     def _on_search_bar_textChanged(self, search_text):
         """Search the script list"""
         self.proxy_model.setSearchTerm(search_text)
@@ -205,7 +209,27 @@ class NavigationWidget(QFrame):
 
     def _on_btn_new_script_clicked(self):
         """Creates a new script in the selected path"""
-        pass
+        text, confirmed = QInputDialog.getText(self, 'New Script', "Enter the new script's name")
+        if not confirmed:
+            return
+        if not text.endswith('.py'):
+            text += '.py'
+        path = os.path.join(self.selected_item_path, text)
+        if os.path.exists(path):
+            infoDialog.InfoDialog(text='File already exists').exec()
+            return
+        try:
+            os.makedirs(self.selected_item_path, exist_ok=True)
+            open(path, 'a').close()
+        except:
+            print('Failed creating new script at "{}"'.format(path))
+            return
+        itemN = ScriptItem(path, os.path.basename(path)[0:-3])
+        self._item_cache.get(os.path.dirname(path)).appendRow(itemN)
+
+        # Selection not working
+        # index = self.nav_tree.model().index(itemN.row(), itemN.column())
+        # self.nav_tree.selectionModel().setCurrentIndex(index, QItemSelectionModel.SelectionFlag.Select)
 
     def iter_tree_items(self):
         """WIP: Related on _on_editor_file_opened"""
@@ -264,11 +288,9 @@ class FilterProxyModel(QSortFilterProxyModel):
         super(FilterProxyModel, self).__init__(*args, **kwargs)
         self.search_term = ''
 
-
     def setSearchTerm(self, term):
         self.search_term = term.lower()
         self.invalidateFilter()
-
 
     def filterAcceptsRow(self, source_row, source_parent):
         if not self.search_term:
