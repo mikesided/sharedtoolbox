@@ -330,7 +330,6 @@ QTextEdit#console {
     selection-color: @black;
     selection-background-color: #157199;
 }
-}
 
 QWidget#codeeditorlines {
     color: @primary_disabled;

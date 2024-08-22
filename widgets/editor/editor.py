@@ -139,6 +139,12 @@ class EditorControls(QFrame):
                                              toolTip='[F3] Run highlighted code')
         self.btn_run_all = QPushButton(icon=qtawesome.icon('ph.play-fill', color=style.STYLE.get('primary'), options=[{'scale_factor': 1.25}]),
                                        toolTip='[F5] Run current script')
+        self.btn_go_to_line = QPushButton(icon=qtawesome.icon('ph.list-numbers', color=style.STYLE.get('primary'), options=[{'scale_factor': 1.25}]),
+                                       toolTip='[Ctrl+G] Go To Line Number')
+        self.btn_find = QPushButton(icon=qtawesome.icon('mdi.magnify', color=style.STYLE.get('primary'), options=[{'scale_factor': 1.25}]),
+                                       toolTip='[Ctrl+H] Find & Replace in document')
+        self.btn_find_replace = QPushButton(icon=qtawesome.icon('mdi.find-replace', color=style.STYLE.get('primary'), options=[{'scale_factor': 1.25}]),
+                                       toolTip='[Ctrl+H] Find & Replace in document')
         
         # Layout
         self.setLayout(QHBoxLayout())
@@ -149,9 +155,10 @@ class EditorControls(QFrame):
         self.layout().addWidget(self.btn_save)
         self.layout().addWidget(self.btn_reveal)
         self.layout().addItem(Spacer(w=30))
-        self.layout().addWidget(self.btn_unindent) # TO CONNECT
-        self.layout().addWidget(self.btn_indent) # TO CONNECT
-        self.layout().addItem(Spacer(w=30))
+        self.layout().addWidget(self.btn_unindent)
+        self.layout().addWidget(self.btn_indent)
+        #self.layout().addItem(Spacer(w=30))
+        self.layout().addItem(HSpacer())
         self.layout().addWidget(self.btn_move_btn_l)
         self.layout().addWidget(self.btn_prev_btn)
         self.layout().addWidget(self.btn_next_btn)
@@ -159,7 +166,11 @@ class EditorControls(QFrame):
         self.layout().addItem(HSpacer())
         self.layout().addWidget(self.btn_run_selection)
         self.layout().addWidget(self.btn_run_all)
-        self.layout().addItem(HSpacer())
+        self.layout().addItem(Spacer(w=30))
+        self.layout().addWidget(self.btn_go_to_line)
+        self.layout().addWidget(self.btn_find)
+        self.layout().addWidget(self.btn_find_replace)
+        #self.layout().addItem(HSpacer())
 
         self._set_btn_options()
 

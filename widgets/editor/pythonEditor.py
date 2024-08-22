@@ -43,19 +43,19 @@ class CodeEditor(QPlainTextEdit):
         super(CodeEditor, self).__init__(*args, **kwargs)
         self.setLineWrapMode(QPlainTextEdit.NoWrap)
         self.setObjectName('codeeditor')
-        self.lineNumberArea = LineNumberArea(self)
+        self.line_number_area = LineNumberArea(self)
         self._set_theme()
         self.is_selected = False
 
-        self.connect(self, SIGNAL('updateRequest(QRect,int)'), self.updateLineNumberArea)
-        self.connect(self, SIGNAL('cursorPositionChanged()'), self.highlightCurrentLine)
-        self.highlightCurrentLine()
+        self.connect(self, SIGNAL('updateRequest(QRect,int)'), self.update_line_number_area)
+        self.connect(self, SIGNAL('cursorPositionChanged()'), self.highlight_current_line)
+        self.highlight_current_line()
 
-        self.setViewportMargins(LineNumberArea.WIDTH, 0, 0, 0)
+        self.setViewportMargins(LineNumberArea.WIDTH + 2, 0, 0, 0)
         self.installEventFilter(self)
 
         # Connections
-        # Be mindful of checking if the current editor is currently selected/focus with self.is_selected
+        # In connections, be mindful of checking if the current editor is currently selected/focus with self.is_selected
         # Because by default, all active editors are listening to events.
         event_handler.shortcut_indent.connect(self._indent_selection)
         event_handler.shortcut_unindent.connect(self._unindent_selection)
@@ -340,12 +340,11 @@ class CodeEditor(QPlainTextEdit):
                 v.setFontFamily(configs.Prefs.editor_font)
                         
 
-    def updateLineNumberArea(self, rect, dy):
-
+    def update_line_number_area(self, rect, dy):
         if dy:
-            self.lineNumberArea.scroll(0, dy)
+            self.line_number_area.scroll(0, dy)
         else:
-            self.lineNumberArea.update(0, rect.y(), self.lineNumberArea.width(),
+            self.line_number_area.update(0, rect.y(), self.line_number_area.width(),
                        rect.height())
 
 
@@ -353,14 +352,27 @@ class CodeEditor(QPlainTextEdit):
         super().resizeEvent(event)
 
         cr = self.contentsRect();
-        self.lineNumberArea.setGeometry(QRect(cr.left(), cr.top(),
+        self.line_number_area.setGeometry(QRect(cr.left(), cr.top(),
                     LineNumberArea.WIDTH, cr.height()))
 
 
     def lineNumberAreaPaintEvent(self, event):
-        mypainter = QPainter(self.lineNumberArea)
+        mypainter = QPainter(self.line_number_area)
 
-        #mypainter.fillRect(event.rect(), Qt.lightGray)
+        # Draw Background
+        mypainter.fillRect(event.rect(), '#171717')
+
+        # Draw border
+        pen = QPen()
+        pen.setColor(style.STYLE.get('dark_2'))
+        mypainter.setPen(pen)
+        p = QPainterPath()
+        p.addRect(LineNumberArea.WIDTH - 1, 0, 1, self.height())
+        mypainter.drawPath(p)
+
+        # Line number text color
+        pen = QPen()
+        mypainter.setPen(style.STYLE.get('primary_active'))
 
         block = self.firstVisibleBlock()
         blockNumber = block.blockNumber()
@@ -371,7 +383,7 @@ class CodeEditor(QPlainTextEdit):
         while block.isValid() and (top <= event.rect().bottom()):
             if block.isVisible() and (bottom >= event.rect().top()):
                 number = str(blockNumber + 1)
-                mypainter.drawText(0, top, self.lineNumberArea.width(), height, Qt.AlignCenter, number)
+                mypainter.drawText(0, top, self.line_number_area.width(), height, Qt.AlignCenter, number)
 
             block = block.next()
             top = bottom
@@ -379,7 +391,9 @@ class CodeEditor(QPlainTextEdit):
             blockNumber += 1
 
 
-    def highlightCurrentLine(self):
+
+
+    def highlight_current_line(self):
         extraSelections = []
 
         if not self.isReadOnly():

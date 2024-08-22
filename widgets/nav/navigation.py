@@ -31,6 +31,8 @@ class NavigationWidget(QFrame):
         self.proxy_model = FilterProxyModel()
         self.btn_new_script = QPushButton(objectName='icon', enabled=False, toolTip='Create a new script in selected location',
                                           icon=qtawesome.icon('fa5b.python', color=style.STYLE.get('primary')))
+        self.btn_new_dir = QPushButton(objectName='icon', enabled=False, toolTip='Create a new folder in selected location',
+                                          icon=qtawesome.icon('fa5s.folder-plus', color=style.STYLE.get('primary')))
         self.btn_open_dir = QPushButton(objectName='icon', enabled=False, toolTip='Open selected location',
                                           icon=qtawesome.icon('ei.folder-open', color=style.STYLE.get('primary')))
         self.search_bar = QLineEdit(placeholderText='Search..', objectName='searchbar', fixedHeight=24)
@@ -59,6 +61,7 @@ class NavigationWidget(QFrame):
         # Connections
         self.search_bar.textChanged.connect(self._on_search_bar_textChanged)
         self.btn_new_script.clicked.connect(self._on_btn_new_script_clicked)
+        self.btn_new_dir.clicked.connect(self._on_btn_new_dir_clicked)
         self.btn_open_dir.clicked.connect(self._on_btn_open_dir_clicked)
         event_handler.file_opened.connect(self._on_editor_file_opened)
 
@@ -96,6 +99,8 @@ class NavigationWidget(QFrame):
         self.header_layout.addWidget(QLabel(text='Explorer', enabled=False))
         self.header_layout.addItem(HSpacer())
         self.header_layout.addWidget(self.btn_new_script)
+        self.header_layout.addWidget(self.btn_new_dir)
+        self.header_layout.addWidget(VLine())
         self.header_layout.addWidget(self.btn_open_dir)
 
     def _set_new_model(self):
@@ -113,9 +118,11 @@ class NavigationWidget(QFrame):
         # Toggle new script button state
         if item_path is None or item_path.endswith('.py'):
             self.btn_new_script.setEnabled(False)
+            self.btn_new_dir.setEnabled(False)
             self.btn_open_dir.setEnabled(False)
         else:
             self.btn_new_script.setEnabled(True)
+            self.btn_new_dir.setEnabled(True)
             self.btn_open_dir.setEnabled(True)
 
         # Emit selection signal
@@ -167,7 +174,7 @@ class NavigationWidget(QFrame):
         project_script_location = configs.Prefs.get_project_script_location()
         project_item = ContainerItem(None, 'Projects')
         self.model.appendRow(project_item)
-        _item_cache[local_script_path] = shared_item
+        _item_cache[project_root_path] = shared_item
 
         if project_root_path and os.path.exists(project_root_path):
             for dir in os.listdir(project_root_path):
@@ -196,6 +203,23 @@ class NavigationWidget(QFrame):
         self.proxy_model.setSearchTerm(search_text)
         if search_text:
             self.nav_tree.expandAll()
+
+    def _on_btn_new_dir_clicked(self):
+        """Creates a new directory at the selected location"""
+        text, confirmed = QInputDialog.getText(self, 'New Folder', "Enter the new folder's name")
+        if not confirmed:
+            return
+        path = os.path.join(self.selected_item_path, text)
+        if os.path.exists(path):
+            infoDialog.InfoDialog(text='Folder already exists').exec()
+            return
+        try:
+            os.makedirs(path, exist_ok=True)
+        except:
+            print('Failed creating new script at "{}"'.format(path))
+            return
+        itemN = ContainerItem(path, os.path.basename(path))
+        self._item_cache.get(self.selected_item_path).appendRow(itemN)
 
     def _on_btn_open_dir_clicked(self):
         """Open the selected item in the file browser"""
