@@ -3,9 +3,9 @@ import os
 import sys
 
 # Third Party Imports
-from PySide6.QtWidgets import *
-from PySide6.QtGui import *
-from PySide6.QtCore import *
+from qtpy.QtWidgets import *
+from qtpy.QtGui import *
+from qtpy.QtCore import *
 
 # Local Imports
 from sharedtoolbox import style, configs
@@ -18,12 +18,25 @@ from sharedtoolbox.widgets import mainwidget
 
 def launch():
     """Launch the SharedToolbox"""
-    app = QApplication(sys.argv)
+    app = QApplication.instance() or QApplication(sys.argv)
     app.setStyle('Fusion')
     app.setFont(QFont(style.FONT))
     window = MainWindow()
+    window.setObjectName('sharedtoolbox')
     window.show()
     sys.exit(app.exec())
+
+    
+def launch_maya():
+    from shiboken2 import wrapInstance
+    import maya.OpenMayaUI as omui
+
+    ptr = omui.MQtUtil.mainWindow()
+    maya_main_window = wrapInstance(int(ptr), QWidget)
+    window = MainWindow(parent=maya_main_window)
+    window.setWindowFlags(Qt.Window)
+    window.setObjectName('sharedtoolbox')
+    window.show()
 
 
 class MainWindow(QMainWindow):

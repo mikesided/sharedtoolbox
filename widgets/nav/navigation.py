@@ -3,9 +3,9 @@ import os
 import sys
 
 # Third Party Imports
-from PySide6.QtWidgets import *
-from PySide6.QtGui import *
-from PySide6.QtCore import *
+from qtpy.QtWidgets import *
+from qtpy.QtGui import *
+from qtpy.QtCore import *
 import qtawesome
 
 # Local Imports
@@ -84,7 +84,7 @@ class NavigationWidget(QFrame):
         """Returns the selected item's path"""
         item = self.selected_item
         if item:
-            return item.get(256)
+            return self.proxy_model.data(self.nav_tree.selectedIndexes()[0], Qt.UserRole)
         else:
             return None
 
@@ -112,8 +112,7 @@ class NavigationWidget(QFrame):
 
     def _on_treeview_itemSelected(self, *args, **kwargs):
         """Triggered when a ContainerItem/ScriptItem has been selected"""
-        item = self.selected_item
-        item_path = item.get(256)
+        item_path = self.selected_item_path
 
         # Toggle new script button state
         if item_path is None or item_path.endswith('.py'):
@@ -223,7 +222,7 @@ class NavigationWidget(QFrame):
 
     def _on_btn_open_dir_clicked(self):
         """Open the selected item in the file browser"""
-        current_item_path = self.selected_item.get(256)
+        current_item_path = self.selected_item_path
         if not os.path.isdir(current_item_path):
             dlg = infoDialog.InfoDialog(text='Directory not found', desc=current_item_path, info_level=3)
             dlg.exec_()

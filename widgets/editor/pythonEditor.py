@@ -9,15 +9,16 @@ import sys
 from functools import partial
 
 # Third Party Imports
-from PySide6.QtWidgets import *
-from PySide6.QtGui import *
-from PySide6.QtCore import *
+from qtpy.QtWidgets import *
+from qtpy.QtGui import *
+from qtpy.QtCore import *
 import qtawesome
 from superqt.utils import CodeSyntaxHighlight
 
 # Local Imports
 from sharedtoolbox import configs, style, event_handler
 from sharedtoolbox.widgets.base import *
+from sharedtoolbox.utils.syntaxHighlighter import PythonHighligter
 
 # ______________________________________________________________________________________________________________________
 
@@ -57,6 +58,8 @@ class CodeEditor(QPlainTextEdit):
         # Connections
         # In connections, be mindful of checking if the current editor is currently selected/focus with self.is_selected
         # Because by default, all active editors are listening to events.
+        event_handler.indent_text.connect(self._indent_selection)
+        event_handler.unindent_text.connect(self._unindent_selection)
         event_handler.shortcut_indent.connect(self._indent_selection)
         event_handler.shortcut_unindent.connect(self._unindent_selection)
         event_handler.theme_changed.connect(self._set_theme)
@@ -64,7 +67,6 @@ class CodeEditor(QPlainTextEdit):
         
     def eventFilter(self, obj, event, *args):
         """Event Filter"""
-        # Only catch current active editor
         if event.type() == QEvent.KeyPress:
             key = event.key()
             modifiers = event.modifiers()
@@ -321,7 +323,7 @@ class CodeEditor(QPlainTextEdit):
 
     def _set_theme(self, *args):
         """Apply a new theme"""
-        self._highlighter = CodeSyntaxHighlight(self.document(), 'python', configs.Prefs.editor_theme)
+        self._highlighter = PythonHighligter(self.document(), 'python', configs.Prefs.editor_theme)
 
         # Additional colors
         background_color = self._highlighter.formatter.style.background_color
@@ -338,7 +340,8 @@ class CodeEditor(QPlainTextEdit):
                 v.setFontFamilies([configs.Prefs.editor_font])
             else:
                 v.setFontFamily(configs.Prefs.editor_font)
-                        
+            #if hasattr(v, 'setFfontPointSize'):
+            #    v.setFontPointSize(6)  
 
     def update_line_number_area(self, rect, dy):
         if dy:
@@ -423,6 +426,6 @@ class EditBlock(object):
         
     def __exit__(self, *args):
         self.text_cursor.endEditBlock()
-
-
+ 
+        
 # ______________________________________________________________________________________________________________________

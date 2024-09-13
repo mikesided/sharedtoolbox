@@ -25,7 +25,7 @@ class CodeHandler:
 
         # Print "begin" statement
         with ColoredConsole('#14ebff'):  # Light blue
-            print(' --- Start code execution ---')
+            print('  --- [{}]: Start code execution ---  '.format(datetime.datetime.now().strftime('%H:%M:%S')))
 
         # Inject environment override
         original_env, original_path = CodeHandler._inject_environment()
@@ -41,9 +41,9 @@ class CodeHandler:
             end_timestamp = datetime.datetime.now()
             # Print "end" statement
             with ColoredConsole('#14ebff'):  # Light blue
-                print('  --- Code execution completed in {} ---'.format(str(end_timestamp - start_timestamp)))
+                print('  --- Code execution completed in {} ---  '.format(str(end_timestamp - start_timestamp)))
 
-            # Reject environment
+            # Extract environment
             os.environ = original_env
             sys.path = original_path
 
@@ -118,6 +118,7 @@ class ColoredConsole():
         self.color = color
 
     def __enter__(self, *args):
+        #event_handler.console_write_html.emit('<span style="color: {};"><br>'.format(self.color))
         event_handler.console_write_html.emit('<span style="color: {};"><br>'.format(self.color))
 
     def __exit__(self, *args):

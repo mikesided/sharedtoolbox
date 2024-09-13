@@ -9,7 +9,7 @@ std_err_handler = stdHandler.StdErrHandler(event_handler)
 configs.Prefs()
 
 # Temporary config
-os.environ['SHAREDTOOLBOX_PROJECT_ROOT'] = r'C:\Users\Michael\AppData\Roaming\sharedtoolbox\projects'
+# os.environ['SHAREDTOOLBOX_PROJECT_ROOT'] = r'C:\Users\Michael\AppData\Roaming\sharedtoolbox\projects'
 
 # Create config file
 if not os.path.exists(configs.PREFS_FILE_PATH):

@@ -3,10 +3,11 @@ import os
 import sys
 
 # Third Party Imports
-from PySide6.QtWidgets import *
-from PySide6.QtGui import *
-from PySide6.QtCore import *
+from qtpy.QtWidgets import *
+from qtpy.QtGui import *
+from qtpy.QtCore import *
 import qtawesome
+
 
 # Local Imports
 from sharedtoolbox import configs, style, event_handler

@@ -3,10 +3,15 @@ QMainWindow {
     background-color: @dark_1;
 }
 
+QDialog {
+    background-color: @dark_1;
+}
+
 QWidget {
     color: @white;
     font-size: 11px;
     outline: 0;
+    font-family: Exo;
 }
 
 QWidget[italic=true] {
